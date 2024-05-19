@@ -22,7 +22,7 @@ from render import *
 space = Euclidean()
 
 # Define the scene tuple: (object(position, rotation, color, visible, ... other))
-objects = (Sphere((10, 5, 0), (255, 0, 0), True, 2),
+objects = (Sphere((10, 5, 0), (0, 0, 0), (255, 0, 0), True, 2),
            Plane((0, 0, 0), (0, 0, 90), (0, 255, 0), True))
 
 # Define the lights tuple: (light(position, color, visible))

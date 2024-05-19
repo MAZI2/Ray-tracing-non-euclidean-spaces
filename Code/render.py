@@ -20,12 +20,14 @@ class Renderer:
     objects: List[Type[_Object]]
     lights: Light
     camera: Camera
+    signs: List[int]
     
     def __init__(self, space, objects, lights, camera):
         self.space = space
         self.objects = objects
         self.lights = lights
         self.camera = camera
+        self.signs = list()
 
     def render(self, step_size: float = 0.01, max_steps: int = 1000):
         """Renders the scene and returns the image."""
@@ -45,5 +47,32 @@ class Renderer:
         """Returns the first intersection of the ray with the scene."""
         # Rekurzivno se kliče, vsak klic prever za vsak objekt v sceni če se je spremenil predznak
         # Če se je, najde točn intersection z uno metodo in vrne točko.
+
+        # t ... number of steps 1->max_steps 
+        prev_position = ray.position
+        for t in range(1, max_steps):
+            new_position = 0 
+            # euclidean
+            
+            # flat torus
+
+            # 2-sphere
+            if (type(self.space) == Euclidean):
+                new_position = self.space.move(ray.position, ray.direction, t)
+
+            sign_index = 0
+            # TODO: mormo pazit da uredu razporedimo objekte, ker cene lahko spremeni 
+            # predznak za vec objektov v eni iteraciji, vrne pa samo eno presecisce
+            for obj in objects:
+                if len(signs) < len(objects):
+                    signs.append(obj.sign(new_position))
+                else:
+                    if signs[sign_index] != obj.sign(new_position):
+                        # TODO: intersection = gaussNewtonIteration((new_position + prev_position)/2)
+                        # return intersection
+
+                sign_index += 1
+            prev_position = new_position
+
         pass
 

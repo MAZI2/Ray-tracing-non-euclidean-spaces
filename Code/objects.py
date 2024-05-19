@@ -19,7 +19,7 @@ class _Object:
         self.color = color
         self.visible = visible
 
-    def intersected(self, position: th.position, prev_predznak: bool) -> bool:
+    def def sign(self, position: th.position) -> int:
         pass
 
 
@@ -30,7 +30,7 @@ class Sphere(_Object):
         super().__init__(position, rotation, color, visible) # Rotation sm dodal da so vsi scene objects enotni.
         self.radius = radius
 
-    def intersected(self, position: th.position, prev_predznak: bool) -> bool:
+    def sign(self, position: th.position) -> int:
         pass
 
 
@@ -39,7 +39,7 @@ class Plane(_Object):
     def __init__(self, position: th.position, rotation: th.rotation, color: th.color, visible: bool):
         super().__init__(position, rotation, color, visible) # Rotation je smer normale na ravnino.
 
-    def intersected(self, position: th.position, prev_predznak: bool) -> bool:
+    def sign(self, position: th.position) -> int:
         pass
 
 

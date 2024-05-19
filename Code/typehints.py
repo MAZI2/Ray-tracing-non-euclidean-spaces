@@ -6,6 +6,7 @@ from typing import Tuple
 
 # Vektorji pozicije in smeri
 position = Tuple[float, float, float] # (x, y, z) 0-inf
+direction = Tuple[float, float, float] # (x, y, z) 0-inf
 rotation = Tuple[float, float, float] # (u, v, w) 0-360 (deg)
 
 # Barva
