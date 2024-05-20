@@ -1,6 +1,7 @@
 # Razredi za vsak objekt ki je lahko v sceni. 
 
 import typehints as th
+import numpy as np
 
 
 # -------------------- Objekti v sceni --------------------
@@ -8,7 +9,7 @@ import typehints as th
 
 class _Object:
     """Objekt v sceni, k bo vidn rayem"""
-    posiition: th.position
+    position: th.position
     rotation: th.rotation
     color: th.color
     visible: bool
@@ -19,7 +20,10 @@ class _Object:
         self.color = color
         self.visible = visible
 
-    def def sign(self, position: th.position) -> int:
+    def sign(self, position: th.position) -> int:
+        pass
+
+    def dist(self, position: th.position) -> float:
         pass
 
 
@@ -31,7 +35,10 @@ class Sphere(_Object):
         self.radius = radius
 
     def sign(self, position: th.position) -> int:
-        pass
+        return np.sign(self.dist(position))
+
+    def dist(self, position: th.position) -> float:
+        return np.linalg.norm(np.subtract(position, self.position)) - self.radius * self.radius
 
 
 class Plane(_Object):
@@ -41,6 +48,10 @@ class Plane(_Object):
 
     def sign(self, position: th.position) -> int:
         pass
+
+    def dist(self, position: th.position) -> float:
+        pass
+
 
 
 # -------------------- Lights --------------------

@@ -3,8 +3,10 @@
 from typing import List, Type
 
 import typehints as th
-from spaces import _Space
+import numpy as np
+from spaces import _Space, Euclidean, Torus, TwoSphere
 from objects import _Object, Light, Camera
+
 
 class _Ray:
     starting_position: th.position
@@ -29,11 +31,25 @@ class Renderer:
         self.camera = camera
         self.signs = list()
 
-    def render(self, step_size: float = 0.01, max_steps: int = 1000):
+    def render(self, step_size: float = 0.1, max_steps: int = 1000, tolerance: float = 0.01):
         """Renders the scene and returns the image."""
         # Iz kamere zračuna kote rayev
         # Za vsak pixel v resoluciji požene ray z _traceray, in ki vrne barvo
         # Barvo shrani v image, returna image.
+
+
+        """ Testing
+        ray1 = _Ray((0, 0, 1), (1, 0, 0))
+        ray2 = _Ray((0, 0, 1), (1, 0, 1))
+        ray3 = _Ray((0, 0, 1), (1, 1, 1))
+        ray4 = _Ray((0, 0, 1), (1, -1, -1))
+
+        print(self._intersection(ray1, step_size, max_steps, tolerance))
+        print(self._intersection(ray2, step_size, max_steps, tolerance))
+        print(self._intersection(ray3, step_size, max_steps, tolerance))
+        print(self._intersection(ray4, step_size, max_steps, tolerance))
+        """
+
         pass
 
     def _trace_ray(self, ray: _Ray):
@@ -43,36 +59,67 @@ class Renderer:
         # Poženeš intersection do luči, če kje intersecta pol je in shadow (temna) sicer svetla.
         pass
 
-    def _intersection(self, ray: _Ray, step_size: float, max_steps: int) -> th.position:
+    def _intersection(self, ray: _Ray, step_size: float, max_steps: int, tolerance: float) -> tuple[th.position, Type[_Object]]:
         """Returns the first intersection of the ray with the scene."""
-        # Rekurzivno se kliče, vsak klic prever za vsak objekt v sceni če se je spremenil predznak
+        # Prever za vsak objekt v sceni če se je spremenil predznak
         # Če se je, najde točn intersection z uno metodo in vrne točko.
 
-        # t ... number of steps 1->max_steps 
-        prev_position = ray.position
-        for t in range(1, max_steps):
-            new_position = 0 
-            # euclidean
-            
-            # flat torus
+        h = step_size;
 
-            # 2-sphere
-            if (type(self.space) == Euclidean):
-                new_position = self.space.move(ray.position, ray.direction, t)
+        sign_index = 0
+        signs = list()
+        for obj in self.objects:
+            signs.append(obj.sign(ray.starting_position))
+            sign_index += 1
 
-            sign_index = 0
-            # TODO: mormo pazit da uredu razporedimo objekte, ker cene lahko spremeni 
-            # predznak za vec objektov v eni iteraciji, vrne pa samo eno presecisce
-            for obj in objects:
-                if len(signs) < len(objects):
-                    signs.append(obj.sign(new_position))
-                else:
-                    if signs[sign_index] != obj.sign(new_position):
-                        # TODO: intersection = gaussNewtonIteration((new_position + prev_position)/2)
-                        # return intersection
+        TCurrent = ray.starting_position;
+        TNew = TCurrent;
 
-                sign_index += 1
-            prev_position = new_position
+        stateNew = ();
+        stateCurrent = ();
 
-        pass
+        step = 0;
+        while(True):
+            if(step == max_steps):
+                break
+
+            for obj in self.objects:
+                if(np.absolute(obj.dist(TCurrent)) < tolerance):
+                    return (TCurrent, obj)
+
+            # Premik za step size h. Shrani novo tocko in stanje (parametri t, u, v, dv, du, ... karkoli potrebuje tvoj space) 
+            # Za Euclidean / Flat torus lahko v state hranimo trenutni parameter t   (v = v0 + t*direction)
+            # Lahko tudi zacetno tocko in direction
+
+            if(type(self.space) == Euclidean):
+                # TODO: Euclidean
+                # stateNew, TNew = self.space.move(stateCurrent, h)
+                print("Euclidean")
+
+            elif(type(self.space) == Torus):
+                # TODO: Torus
+                # podobno
+                print("Torus")
+
+            elif(type(self.space) == TwoSphere):
+                # 2-Sphere
+                if(step == 0):
+                    stateCurrent = self.space.initializeState(ray.starting_position, ray.direction, h)
+                stateNew, h, TNew = self.space.move(stateCurrent, h)
+
+            ix = 0
+            changed = 0
+            for obj in self.objects:
+                if(obj.sign(TNew) != signs[ix]):
+                    h = h/2
+                    changed = 1
+                    break
+                ix += 1
+
+            if(changed != 1):
+                stateCurrent = stateNew
+                TCurrent = TNew;
+            step = step+1;
+
+        return ()
 
