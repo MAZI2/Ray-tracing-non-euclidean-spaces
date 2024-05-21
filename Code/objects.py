@@ -1,6 +1,7 @@
 # Razredi za vsak objekt ki je lahko v sceni. 
 
 import typehints as th
+import numpy as np
 
 class _Scene_object:
     """Katerakol stvar, ki jo lahko damo v sceno."""
@@ -15,7 +16,11 @@ class _Scene_object:
         self.rotation = rotation
         self.visible = visible
 
-    # Getters & Setters
+    def sign(self, position: th.position) -> int:
+        pass
+
+    def dist(self, position: th.position) -> float:
+        pass
 
 
 # -------------------- Objekti v sceni --------------------
@@ -31,7 +36,10 @@ class Sphere(_Scene_object):
         self.color = color
 
     def sign(self, position: th.position) -> int:
-        pass
+        return np.sign(self.dist(position))
+
+    def dist(self, position: th.position) -> float:
+        return np.linalg.norm(np.subtract(position, self.position)) - self.radius * self.radius
 
 
 class Plane(_Scene_object):
@@ -43,6 +51,10 @@ class Plane(_Scene_object):
 
     def sign(self, position: th.position) -> int:
         pass
+
+    def dist(self, position: th.position) -> float:
+        pass
+
 
 
 # -------------------- Lights --------------------

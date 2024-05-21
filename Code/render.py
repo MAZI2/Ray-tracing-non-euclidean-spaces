@@ -6,6 +6,7 @@ import pygame
 
 import typehints as th
 from scene import Scene
+from spaces import _Space, Euclidean, Torus, TwoSphere
 from objects import _Scene_object, Light, Camera
 
 import logging
@@ -27,7 +28,7 @@ class Renderer:
         self.scene = scene
         pygame.init()
 
-    def render(self, step_size: float = 0.01, max_steps: int = 1000):
+    def render(self, step_size: float = 0.1, max_steps: int = 1000, tolerance: float = 0.01):
         """Renders the scene and returns the image."""
 
         # Par stvari za kamero
@@ -103,31 +104,62 @@ class Renderer:
     #     # Rekurzivno se kliče, vsak klic prever za vsak objekt v sceni če se je spremenil predznak
     #     # Če se je, najde točn intersection z uno metodo in vrne točko.
 
-    #     # t ... number of steps 1->max_steps 
-    #     prev_position = ray.position
-    #     for t in range(1, max_steps):
-    #         new_position = 0 
-    #         # euclidean
-            
-    #         # flat torus
+        h = step_size;
 
-    #         # 2-sphere
-    #         if (type(self.space) == Euclidean):
-    #             new_position = self.space.move(ray.position, ray.direction, t)
+        sign_index = 0
+        signs = list()
+        for obj in self.objects:
+            signs.append(obj.sign(ray.starting_position))
+            sign_index += 1
 
-    #         sign_index = 0
-    #         # TODO: mormo pazit da uredu razporedimo objekte, ker cene lahko spremeni 
-    #         # predznak za vec objektov v eni iteraciji, vrne pa samo eno presecisce
-    #         for obj in objects:
-    #             if len(signs) < len(objects):
-    #                 signs.append(obj.sign(new_position))
-    #             else:
-    #                 if signs[sign_index] != obj.sign(new_position):
-    #                     # TODO: intersection = gaussNewtonIteration((new_position + prev_position)/2)
-    #                     # return intersection
+        TCurrent = ray.starting_position;
+        TNew = TCurrent;
 
-    #             sign_index += 1
-    #         prev_position = new_position
+        stateNew = ();
+        stateCurrent = ();
 
-    #     pass
-    
+        step = 0;
+        while(True):
+            if(step == max_steps):
+                break
+
+            for obj in self.objects:
+                if(np.absolute(obj.dist(TCurrent)) < tolerance):
+                    return (TCurrent, obj)
+
+            # Premik za step size h. Shrani novo tocko in stanje (parametri t, u, v, dv, du, ... karkoli potrebuje tvoj space) 
+            # Za Euclidean / Flat torus lahko v state hranimo trenutni parameter t   (v = v0 + t*direction)
+            # Lahko tudi zacetno tocko in direction
+
+            if(type(self.space) == Euclidean):
+                # TODO: Euclidean
+                # stateNew, TNew = self.space.move(stateCurrent, h)
+                print("Euclidean")
+
+            elif(type(self.space) == Torus):
+                # TODO: Torus
+                # podobno
+                print("Torus")
+
+            elif(type(self.space) == TwoSphere):
+                # 2-Sphere
+                if(step == 0):
+                    stateCurrent = self.space.initializeState(ray.starting_position, ray.direction, h)
+                stateNew, h, TNew = self.space.move(stateCurrent, h)
+
+            ix = 0
+            changed = 0
+            for obj in self.objects:
+                if(obj.sign(TNew) != signs[ix]):
+                    h = h/2
+                    changed = 1
+                    break
+                ix += 1
+
+            if(changed != 1):
+                stateCurrent = stateNew
+                TCurrent = TNew;
+            step = step+1;
+
+        return ()
+
