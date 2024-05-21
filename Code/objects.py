@@ -2,42 +2,44 @@
 
 import typehints as th
 
-
-# -------------------- Objekti v sceni --------------------
-# Vsi objekti v sceni morjo bit otrok _Object objekta.
-
-class _Object:
-    """Objekt v sceni, k bo vidn rayem"""
-    posiition: th.position
+class _Scene_object:
+    """Katerakol stvar, ki jo lahko damo v sceno."""
+    name: str
+    position: th.position
     rotation: th.rotation
-    color: th.color
     visible: bool
 
-    def __init__(self, position: th.position, rotation: th.rotation, color: th.color, visible: bool):
+    def __init__(self, name: str, position: th.position, rotation: th.rotation, visible: bool):
+        self.name = name
         self.position = position
         self.rotation = rotation
-        self.color = color
         self.visible = visible
 
-    def def sign(self, position: th.position) -> int:
-        pass
+    # Getters & Setters
 
 
-class Sphere(_Object):
+# -------------------- Objekti v sceni --------------------
+
+class Sphere(_Scene_object):
     radius: float
 
-    def __init__(self, position: th.position, rotation: th.rotation, color: th.color, visible: bool, radius: float):
-        super().__init__(position, rotation, color, visible) # Rotation sm dodal da so vsi scene objects enotni.
+    color: th.color
+
+    def __init__(self, name: str, position: th.position, rotation: th.rotation, color: th.color, visible: bool, radius: float):
+        super().__init__(name, position, rotation, visible) # Rotation sm dodal da so vsi scene objects enotni.
         self.radius = radius
+        self.color = color
 
     def sign(self, position: th.position) -> int:
         pass
 
 
-class Plane(_Object):
+class Plane(_Scene_object):
+    color: th.color
 
-    def __init__(self, position: th.position, rotation: th.rotation, color: th.color, visible: bool):
-        super().__init__(position, rotation, color, visible) # Rotation je smer normale na ravnino.
+    def __init__(self, name: str, position: th.position, color: th.color = (255, 255, 255)):
+        super().__init__(name, position, (0, 0, 0), True) # Rotation je smer normale na ravnino.
+        self.color = color
 
     def sign(self, position: th.position) -> int:
         pass
@@ -45,27 +47,22 @@ class Plane(_Object):
 
 # -------------------- Lights --------------------
 
-class Light:
-    posiition: th.position
+class Light(_Scene_object):
     color: th.color
-    visible: bool
 
-    def __init__(self, position: th.position, color: th.color, visible: bool):
-        self.position = position
+    def __init__(self, name: str, position: th.position, color: th.color = (255, 255, 255)):
+        super().__init__(name, position, (0, 0, 0), True)
         self.color = color
-        self.visible = visible
+
 
 # -------------------- Cameras --------------------
 
-class Camera:
-    posiition: th.position
-    rotation: th.rotation
+class Camera(_Scene_object):
     fov: float
     resolution: th.resolution
 
-    def __init__(self, position: th.position, rotation: th.rotation, fov: float, resolution: th.resolution):
-        self.position = position
-        self.rotation = rotation
+    def __init__(self, name: str, position: th.position, rotation: th.rotation, fov: float = 70, resolution: th.resolution = (960, 540)):
+        super().__init__(name, position, rotation, True)
         self.fov = fov # Diagonaln Field of view (v stopinjah)
         self.resolution = resolution # (width, height) 0-inf
 

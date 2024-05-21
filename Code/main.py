@@ -1,8 +1,14 @@
 # Tukej definiraš sceno, main pol požene renderjanje itd.
-
 from spaces import *
 from objects import *
 from render import *
+from scene import *
+
+import logging
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
 
 #    y
 #    |
@@ -13,31 +19,23 @@ from render import *
 #  /
 # z
 
+# Position: (x, y, z
+# Rotation: (u, v, w), Default smer je v smeri osi x
+
 # - u: rotation around y axis
 # - v: rotation around x axis
 # - w: rotation around z axis
 
-# ------------------ Settings ------------------
-# What space are we in?
-space = Euclidean()
-
-# Define the scene tuple: (object(position, rotation, color, visible, ... other))
-objects = (Sphere((10, 5, 0), (0, 0, 0), (255, 0, 0), True, 2),
-           Plane((0, 0, 0), (0, 0, 90), (0, 255, 0), True))
-
-# Define the lights tuple: (light(position, color, visible))
-lights = (Light((10, 20, 0), (255, 255, 255), True))
-
-# Define the camera (position, direction, fov, resolution)
-camera = Camera((0, 0, 0), (0, 0, 1), 90, (1920, 1080))
-
 # ------------------ Main ------------------
 
 def main():
-    # renderer = Renderer(space, objects, lights, camera)
-    # image = renderer.render()
-    # Show image
-    pass
+    scene = Scene(Euclidean(), [Plane("plane", (10, 0, 0))], Light("light", (10, 10, 0), ), Camera("camera", (0, 0, 0), (0, 0, 0)))
+    
+    renderer = Renderer(scene)
+    renderer.render()
+
+    running = True
+
 
 # Run main:
 main()

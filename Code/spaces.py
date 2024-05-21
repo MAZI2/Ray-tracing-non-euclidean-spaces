@@ -7,12 +7,18 @@ import math
 # Vsi space morjo bit otroci _Space classa, in povozt vse njen metode.
 
 class _Space:
+    name: str = "Pozabu si me preimenovat!"
+
     def move(self, position: th.position, direction: th.direction , step) -> th.position:
         """Premakne ray ki se začne v točki position(x, y, z) za step_size v smeri direction(u, v, w)"""
         pass
 
 
 class Euclidean(_Space):
+
+    def __init__(self):
+        self.name = "Euclidean"
+    
     def move(self, position: th.position, direction: th.direction , step) -> th.position:
         x = position[0] + step * direction[0]
         y = position[1] + step * direction[1]
@@ -23,6 +29,10 @@ class Euclidean(_Space):
 
 # 2-Sphere
 class TwoSphere(_Space):
+
+    def __init__(self):
+        self.name = "2-Sphere"
+    
     # TODO: meki macroti / settingsi
     radius = 2
     h = 0.1
