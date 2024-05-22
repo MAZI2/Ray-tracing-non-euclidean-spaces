@@ -54,7 +54,7 @@ class Renderer:
 
         # Initial smer raya zračunam kot polovica fov_x lavo in fov_y gor
         ray_direction = np.array([cam_u - (fov_x / 2), 
-                                  cam_v - (fov_y / 2),
+                                  cam_v + (fov_y / 2),
                                   cam_w])
 
         logger.info(f"Rendering scene {resolution_x}x{resolution_y} with fov {fov}.")
