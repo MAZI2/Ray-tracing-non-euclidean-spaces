@@ -22,3 +22,9 @@ class ObjType:
     object = "object"
     light = "light"
     camera = "camera"
+
+# Eventi za UI
+class UIEvent:
+    quit = "quit"
+    update_screen = "update_screen"
+    update_image = "update_image"

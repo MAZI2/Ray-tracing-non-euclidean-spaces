@@ -22,14 +22,20 @@ class _Ray:
 
 class Renderer:
     
-    def __init__(self, scene: Type[Scene], resolution: th.resolution = (800, 600), background_color: th.color = (0, 0, 0)):
+    def __init__(self, scene: Type[Scene], resolution: th.resolution = (800, 600)):
         self.scene = scene
         self.resolution = resolution # (width, height) 0-inf
-        self.background_color = background_color
-        pygame.init()
-        pygame.display.set_caption("Raytracer")
+        self.image = None
+    
+    @property
+    def resolution(self) -> th.resolution:
+        return (self.resolution_x, self.resolution_y)
+    
+    @resolution.setter
+    def resolution(self, resolution: th.resolution):
+        self.resolution_x, self.resolution_y = resolution
 
-    def render(self, step_size: float = 0.1, max_steps: int = 1000, tolerance: float = 0.01):
+    def render(self, step_size: float = 0.1, max_steps: int = 1000, tolerance: float = 0.01) -> np.ndarray:
         """Renders the scene and returns the image."""
 
         # Par stvari nastavm
@@ -37,27 +43,25 @@ class Renderer:
         cam_u, cam_v, cam_w = camera.rotation
         fov = camera.fov # Po diagonali
 
-        resolution_x, resolution_y = self.resolution
-
-        # Nastavm pygame
-        
-        screen = pygame.display.set_mode((resolution_x, resolution_y))
-        screen.fill(self.background_color)
+        res_x, res_y = self.resolution
 
         # Zračunam kot med diagonalo slike glede na razmerje med širino in višino
-        kot = np.arctan(resolution_x / resolution_y)
+        kot = np.arctan(res_x / res_y) # Kot med diagonalo in širino "slike"
         fov_x = np.sin(kot) * fov
         fov_y = np.cos(kot) * fov
 
         # Step size kota v x in y smeri
-        kot_step = fov_x / resolution_x # Dejansko sta enaka, ker je piksel kvadraten.
+        kot_step = fov_x / res_x # Dejansko sta enaka, ker je piksel kvadraten.
 
         # Initial smer raya zračunam kot polovica fov_x lavo in fov_y gor
         ray_direction = np.array([cam_u - (fov_x / 2), 
                                   cam_v + (fov_y / 2),
                                   cam_w])
+        
+        # Naredim nov image zadevo
+        self.image = np.ndarray((res_x, res_y, 3), dtype=np.uint8)
 
-        logger.info(f"Rendering scene {resolution_x}x{resolution_y} with fov {fov}.")
+        logger.info(f"Rendering scene {res_x}x{res_y} with fov {fov}.")
         logger.debug(f"""\n    Camera position: {camera.position}
     Camera direction: {camera.rotation}
     Initial ray direction: {ray_direction}
@@ -65,20 +69,20 @@ class Renderer:
     kot_step: {kot_step}""")
         
         # Za vsak pixel en ray, narišem na pygame
-        for i in range(resolution_x):
-            for j in range(resolution_y):
+        for i in range(res_x):
+            for j in range(res_y):
                 # Zračunam ray
-                direction_vector = self.degrees_to_vector(ray_direction)
+                direction_vector = self._degrees_to_vector(ray_direction)
                 ray = _Ray(camera.position, direction_vector)
                 color = self._trace_ray(ray)
                 
                 # Debug
-                if j == 0 or j == resolution_y - 1: 
-                    if i == 0 or i == resolution_x - 1:
+                if j == 0 or j == res_y - 1: 
+                    if i == 0 or i == res_x - 1:
                         logger.debug(f"Pixel ({i}, {j}) direction: {ray_direction}, vector: {direction_vector}, color: {color}")
 
                 # Narišem pixel
-                screen.set_at((i, j), color)
+                self.image[i, j] = color
 
                 # Premik v vertikalni smeri
                 ray_direction[1] -= kot_step
@@ -86,18 +90,13 @@ class Renderer:
             # Premaknem ray v horizontalni smeri + premik višine na začetk
             ray_direction[0] += kot_step
             ray_direction[1] = cam_v - (fov_y / 2) # Resetiram višino
-    
-    def show_image(self):
-        """Shows the rendered image."""
-        pygame.display.flip()
-        running = True
-        while running:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
+        
+        return(self.image, self.resolution)
 
     def save_image(self, filename: str = "render.png"): 
         pass
+
+    # HELPER FUNCTIONS
 
     def _trace_ray(self, ray: _Ray):
         """Traces the ray through the scene and returns the color of the pixel."""
@@ -168,9 +167,7 @@ class Renderer:
 
         return ()
 
-    # HELPER FUNCTIONS
-
-    def degrees_to_vector(self, rotation: th.rotation) -> np.ndarray:
+    def _degrees_to_vector(self, rotation: th.rotation) -> np.ndarray:
         """
         Convert angles in degrees (tilt, roll, pan) to a direction base vector.
 
