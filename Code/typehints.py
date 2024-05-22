@@ -14,3 +14,11 @@ color = Tuple[int, int, int] # (r, g, b) 0-255
 
 # Resolucija
 resolution = Tuple[int, int] # (width, height) 0-inf
+
+# Tip objekta
+class ObjType:
+    sphere = "sphere"
+    plane = "plane"
+    object = "object"
+    light = "light"
+    camera = "camera"

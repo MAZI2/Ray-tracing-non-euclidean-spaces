@@ -21,30 +21,31 @@ class _Ray:
         self.direction = direction
 
 class Renderer:
-    scene: Type[Scene]
-    background_color: th.color = (0, 0, 0)
     
-    def __init__(self, scene: Type[Scene]):
+    def __init__(self, scene: Type[Scene], resolution: th.resolution = (800, 600), background_color: th.color = (0, 0, 0)):
         self.scene = scene
+        self.resolution = resolution # (width, height) 0-inf
+        self.background_color = background_color
         pygame.init()
+        pygame.display.set_caption("Raytracer")
 
     def render(self, step_size: float = 0.1, max_steps: int = 1000, tolerance: float = 0.01):
         """Renders the scene and returns the image."""
 
-        # Par stvari za kamero
-        camera: Type[Camera] = self.scene.camera
-        cam_direction = camera.rotation
-        resolution_x = camera.resolution[0] # Horizontalna
-        resolution_y = camera.resolution[1] # Vertikalna
+        # Par stvari nastavm
+        camera: Type[Camera] = self.scene.cameras[0]
+        cam_u, cam_v, cam_w = camera.rotation
         fov = camera.fov # Po diagonali
 
+        resolution_x, resolution_y = self.resolution
+
         # Nastavm pygame
-        pygame.display.set_caption("Raytracer")
+        
         screen = pygame.display.set_mode((resolution_x, resolution_y))
         screen.fill(self.background_color)
 
         # Zračunam kot med diagonalo slike glede na razmerje med širino in višino
-        kot = np.arctan(camera.resolution[0] / camera.resolution[1])
+        kot = np.arctan(resolution_x / resolution_y)
         fov_x = np.sin(kot) * fov
         fov_y = np.cos(kot) * fov
 
@@ -52,47 +53,51 @@ class Renderer:
         kot_step = fov_x / resolution_x # Dejansko sta enaka, ker je piksel kvadraten.
 
         # Initial smer raya zračunam kot polovica fov_x lavo in fov_y gor
-        ray_direction = (cam_direction[0] - (fov_x / 2), 
-                         cam_direction[1], # Obračanje okoli x osi nespremenjeno
-                         cam_direction[2] + (fov_y / 2))
+        ray_direction = np.array([cam_u - (fov_x / 2), 
+                                  cam_v - (fov_y / 2),
+                                  cam_w])
 
         logger.info(f"Rendering scene {resolution_x}x{resolution_y} with fov {fov}.")
         logger.debug(f"""\n    Camera position: {camera.position}
-    Camera direction: {camera.rotation}    
+    Camera direction: {camera.rotation}
     Initial ray direction: {ray_direction}
     fov_x: {fov_x}, fov_y: {fov_y}
     kot_step: {kot_step}""")
-
         
         # Za vsak pixel en ray, narišem na pygame
         for i in range(resolution_x):
             for j in range(resolution_y):
                 # Zračunam ray
-                ray = _Ray(camera.position, ray_direction)
+                direction_vector = self.degrees_to_vector(ray_direction)
+                ray = _Ray(camera.position, direction_vector)
                 color = self._trace_ray(ray)
+                
+                # Debug
+                if j == 0 or j == resolution_y - 1: 
+                    if i == 0 or i == resolution_x - 1:
+                        logger.debug(f"Pixel ({i}, {j}) direction: {ray_direction}, vector: {direction_vector}, color: {color}")
 
                 # Narišem pixel
                 screen.set_at((i, j), color)
 
                 # Premik v vertikalni smeri
-                ray_direction = (ray_direction[0], ray_direction[1], ray_direction[2] - kot_step)
+                ray_direction[1] -= kot_step
 
             # Premaknem ray v horizontalni smeri + premik višine na začetk
-            ray_direction = (ray_direction[0] + kot_step, ray_direction[1], ray_direction[2] + fov_y)
-        
-        logger.debug("Rendering finished.")
-        
+            ray_direction[0] += kot_step
+            ray_direction[1] = cam_v - (fov_y / 2) # Resetiram višino
+    
+    def show_image(self):
+        """Shows the rendered image."""
+        pygame.display.flip()
         running = True
         while running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
-            pygame.display.flip()
 
-        pygame.quit()
-
-            
-
+    def save_image(self, filename: str = "render.png"): 
+        pass
 
     def _trace_ray(self, ray: _Ray):
         """Traces the ray through the scene and returns the color of the pixel."""
@@ -144,7 +149,7 @@ class Renderer:
             elif(type(self.space) == TwoSphere):
                 # 2-Sphere
                 if(step == 0):
-                    stateCurrent = self.space.initializeState(ray.starting_position, ray.direction, h)
+                    stateCurrent = self.space.initializeState(ray.position, ray.direction, h)
                 stateNew, h, TNew = self.space.move(stateCurrent, h)
 
             ix = 0
@@ -163,3 +168,53 @@ class Renderer:
 
         return ()
 
+    # HELPER FUNCTIONS
+
+    def degrees_to_vector(self, rotation: th.rotation) -> np.ndarray:
+        """
+        Convert angles in degrees (tilt, roll, pan) to a direction base vector.
+
+        Args:
+            rotation (tuple[float, float, float]): A tuple of three angles in degrees (pan, tilt, roll).
+
+        Returns:
+            np.ndarray: A 3D direction vector.
+        """
+        pan, tilt, roll = rotation
+
+        # Convert degrees to radians
+        tilt_rad = np.radians(tilt)
+        roll_rad = np.radians(roll)
+        pan_rad = np.radians(pan)
+
+        # Rotation matrix around the y-axis (pan)
+        R_y = np.array([
+            [np.cos(pan_rad), 0, -np.sin(pan_rad)],
+            [0, 1, 0],
+            [np.sin(pan_rad), 0, np.cos(pan_rad)]
+        ])
+
+        # Rotation matrix around the z-axis (tilt)
+        R_z = np.array([
+            [np.cos(tilt_rad), -np.sin(tilt_rad), 0],
+            [np.sin(tilt_rad), np.cos(tilt_rad), 0],
+            [0, 0, 1]
+        ])
+
+        # Rotation matrix around the x-axis (roll)
+        R_x = np.array([
+            [1, 0, 0],
+            [0, np.cos(roll_rad), -np.sin(roll_rad)],
+            [0, np.sin(roll_rad), np.cos(roll_rad)]
+        ])
+
+        # Combined rotation matrix
+        R = np.dot(np.dot(R_x, R_y), R_z)
+
+        # Initial direction vector (assuming forward direction along the z-axis)
+        initial_vector = np.array([1, 0, 0]) # (x, y, z)
+
+        # Apply the rotation matrix to the initial vector
+        direction_vector = np.dot(R, initial_vector)
+
+        return direction_vector

@@ -5,23 +5,38 @@ import numpy as np
 
 class _Scene_object:
     """Katerakol stvar, ki jo lahko damo v sceno."""
-    name: str
-    position: th.position
-    rotation: th.rotation
-    visible: bool
-
-    def __init__(self, name: str, position: th.position, rotation: th.rotation, visible: bool):
+    
+    def __init__(self, name: str, type: list[str], position: th.position, rotation: th.rotation, visible: bool):
         self.name = name
-        self.position = position
-        self.rotation = rotation
+        self.type = type
         self.visible = visible
+        # Position
+        self.pos_x, self.pos_y, self.pos_z = position
+        # Rotation
+        self.rot_u, self.rot_v, self.rot_w = rotation
 
     def sign(self, position: th.position) -> int:
-        pass
+        raise NotImplementedError
 
     def dist(self, position: th.position) -> float:
-        pass
+        raise NotImplementedError
+    
+    # Getters, setters for position and rotation easyer use.
+    @property
+    def position(self) -> th.position:
+        return (self.pos_x, self.pos_y, self.pos_z)
+    
+    @position.setter
+    def position(self, position: th.position):
+        self.pos_x, self.pos_y, self.pos_z = position
 
+    @property
+    def rotation(self) -> th.rotation:
+        return (self.rot_u, self.rot_v, self.rot_w)
+    
+    @rotation.setter
+    def rotation(self, rotation: th.rotation):
+        self.rot_u, self.rot_v, self.rot_w = rotation
 
 # -------------------- Objekti v sceni --------------------
 
@@ -30,8 +45,8 @@ class Sphere(_Scene_object):
 
     color: th.color
 
-    def __init__(self, name: str, position: th.position, rotation: th.rotation, color: th.color, visible: bool, radius: float):
-        super().__init__(name, position, rotation, visible) # Rotation sm dodal da so vsi scene objects enotni.
+    def __init__(self, name: str, position: th.position, rotation: th.rotation, radius: float, color: th.color = (255, 255, 255), visible: bool = True):
+        super().__init__(name, [th.ObjType.object, th.ObjType.sphere], position, rotation, visible) # Rotation sm dodal da so vsi scene objects enotni.
         self.radius = radius
         self.color = color
 
@@ -46,7 +61,7 @@ class Plane(_Scene_object):
     color: th.color
 
     def __init__(self, name: str, position: th.position, color: th.color = (255, 255, 255)):
-        super().__init__(name, position, (0, 0, 0), True) # Rotation je smer normale na ravnino.
+        super().__init__(name, [th.ObjType.object, th.ObjType.plane], position, (0, 0, 0), True) # Rotation je smer normale na ravnino.
         self.color = color
 
     def sign(self, position: th.position) -> int:
@@ -63,7 +78,7 @@ class Light(_Scene_object):
     color: th.color
 
     def __init__(self, name: str, position: th.position, color: th.color = (255, 255, 255)):
-        super().__init__(name, position, (0, 0, 0), True)
+        super().__init__(name, [th.ObjType.light], position, (0, 0, 0), True)
         self.color = color
 
 
@@ -71,10 +86,7 @@ class Light(_Scene_object):
 
 class Camera(_Scene_object):
     fov: float
-    resolution: th.resolution
 
-    def __init__(self, name: str, position: th.position, rotation: th.rotation, fov: float = 70, resolution: th.resolution = (960, 540)):
-        super().__init__(name, position, rotation, True)
+    def __init__(self, name: str, position: th.position, rotation: th.rotation, fov: float = 70):
+        super().__init__(name, [th.ObjType.camera], position, rotation, True)
         self.fov = fov # Diagonaln Field of view (v stopinjah)
-        self.resolution = resolution # (width, height) 0-inf
-
