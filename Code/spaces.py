@@ -27,8 +27,13 @@ class Euclidean(_Space):
 
 # Torus
 class Torus(_Space):
+    def __init__(self):
+        self.name = "Flat Torus"
     def move(self, position: th.position, direction: th.direction , step) -> th.position:
-        pass
+        x = (position[0] + step * direction[0])%1
+        y = (position[1] + step * direction[1])%1
+        z = (position[2] + step * direction[2])%1
+        return (x, y, z)
 
 # 2-Sphere
 class TwoSphere(_Space):
