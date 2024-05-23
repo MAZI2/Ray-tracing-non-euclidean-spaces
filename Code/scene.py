@@ -159,34 +159,6 @@ class Scene:
             obj.rot_w = kwargs["w"]
         else:
             print("No rotation specified. Use rotate help")
-    
-    def add(self, **kwargs):
-        if not kwargs or kwargs["name"] == "help":
-            help("add")
-            return
-        
-        name = kwargs["name"]
-        if name in self.scene_contents:
-            print(f"Object with name {name} already exists.")
-            return
-        
-        if "type" not in kwargs:
-            print("No type specified.")
-            return
-        
-
-
-
-    def remove(self, name: str):
-        if name not in self.scene_contents and name != self.light.name and name != self.camera.name: # Če ga ni nikjer
-            print(f"{name} does not exist.")
-        else:
-            if name == self.light.name:
-                self._light = None
-            elif name == self.camera.name:
-                self._camera = None
-            else:
-                self.scene_contents.pop(name)
 
     def change_attribute(self, name: str, attribute: str, value):
         if name not in self.scene_contents:
@@ -206,15 +178,5 @@ class Scene:
             print(header)
             print("-" * len(header))
             for obj in self.scene_contents.values():
-                print(f"{obj.type:<10} | {obj.name:<10} {obj.pos_x:<8.2f} {obj.pos_y:<8.2f} {obj.pos_z:<8.2f} {obj.rot_u:<8.2f} {obj.rot_v:<8.2f} {obj.rot_w:<8.2f}")
-
-    def help(self, command: str = None):
-        if command:
-            if command in self.help_dict:
-                print(f"{command}: {self.help_dict[command]}")
-            else:
-                print(f"No help available for {command}.")
-        else:
-            print("Available commands:")
-            for command in self.help_dict:
-                print(f" - {command}: {self.help_dict[command]}")
+                test = [1, 2, 3]
+                print(f"{obj.type[0]:<10} | {obj.name:<10} {obj.pos_x:<8.2f} {obj.pos_y:<8.2f} {obj.pos_z:<8.2f} {obj.rot_u:<8.2f} {obj.rot_v:<8.2f} {obj.rot_w:<8.2f}")

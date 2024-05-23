@@ -25,7 +25,6 @@ class Renderer:
     def __init__(self, scene: Type[Scene], resolution: th.resolution = (800, 600)):
         self.scene = scene
         self.resolution = resolution # (width, height) 0-inf
-        self.image = None
     
     @property
     def resolution(self) -> th.resolution:
@@ -54,51 +53,60 @@ class Renderer:
         kot_step = fov_x / res_x # Dejansko sta enaka, ker je piksel kvadraten.
 
         # Initial smer raya zračunam kot polovica fov_x lavo in fov_y gor
-        ray_direction = np.array([cam_u - (fov_x / 2), 
+        ray_direction_deg = np.array([cam_u - (fov_x / 2), 
                                   cam_v + (fov_y / 2),
                                   cam_w])
+        ray_direction = self._degrees_to_vector(ray_direction_deg) # Initial direction vector
         
+        # Create the rotation matrices for rotating the ray direction
+        rot_down_step = self._get_rotation_matrix((0, -kot_step, 0))
+        rot_up_right_fov = self._get_rotation_matrix((kot_step, fov_y, 0))
+
         # Naredim nov image zadevo
-        self.image = np.ndarray((res_x, res_y, 3), dtype=np.uint8)
+        image = np.zeros((res_x, res_y, 3), dtype=np.uint8)
 
         logger.info(f"Rendering scene {res_x}x{res_y} with fov {fov}.")
         logger.debug(f"""\n    Camera position: {camera.position}
     Camera direction: {camera.rotation}
-    Initial ray direction: {ray_direction}
+    Initial ray direction deg: {ray_direction_deg}; vector: {ray_direction}
     fov_x: {fov_x}, fov_y: {fov_y}
-    kot_step: {kot_step}""")
+    kot_step: {kot_step}
+    rot_down_step matrix: {rot_down_step}, rot_up_right_fov matrix: {rot_up_right_fov}""")
         
+        # Za pzpis pikic: 
+        print("|start..........................................................................................end|", )
+
         # Za vsak pixel en ray, narišem na pygame
-        for i in range(res_x):
-            for j in range(res_y):
+        for i in range(res_y):
+            for j in range(res_x):
+                pass
                 # Zračunam ray
-                direction_vector = self._degrees_to_vector(ray_direction) # SLOW!!!!!!
-                ray = _Ray(camera.position, direction_vector)
-                color = self._trace_ray(ray)
-                
+                color = self._trace_ray(camera.position, ray_direction)
+
                 # Debug
-                if j == 0 or j == res_y - 1: 
-                    if i == 0 or i == res_x - 1:
-                        logger.debug(f"Pixel ({i}, {j}) direction: {ray_direction}, vector: {direction_vector}, color: {color}")
+                # if j == 0 or j == res_x - 1: 
+                #     if i == 0 or i == res_y - 1:
+                #         logger.debug(f"Pixel ({i}, {j}) vector: {ray_direction}, color: {color}")
 
+                # Obrnem ray
+                ray_direction = np.dot(rot_down_step, ray_direction)
+                
                 # Narišem pixel
-                self.image[i, j] = color
-
-                # Premik v vertikalni smeri
-                ray_direction[1] -= kot_step
+                image[j, i] = [255, 0, 255]
 
             # Premaknem ray v horizontalni smeri + premik višine na začetk
-            ray_direction[0] += kot_step
-            ray_direction[1] = cam_v - (fov_y / 2) # Resetiram višino
-        
-        return(self.image, self.resolution)
+            ray_direction = np.dot(rot_up_right_fov, ray_direction)
 
-    def save_image(self, filename: str = "render.png"): 
-        pass
+            # Izpis pikic
+            if i % (res_y // 100) == 0:
+                print(".", end="", flush=True)
+                
+
+        return image
 
     # HELPER FUNCTIONS
 
-    def _trace_ray(self, ray: _Ray):
+    def _trace_ray(self, position: th.position, direction: th.direction) -> th.color:
         """Traces the ray through the scene and returns the color of the pixel."""
         # Za debug return random
         # return (np.random.randint(0, 255), np.random.randint(0, 255), np.random.randint(0, 255))
@@ -168,7 +176,54 @@ class Renderer:
 
         return ()
 
-    def _degrees_to_vector(self, rotation: th.rotation) -> np.ndarray:
+    @staticmethod
+    def _get_rotation_matrix(rotation: th.rotation) -> np.ndarray:
+        """
+        Convert angles in degrees (tilt, roll, pan) to matrix that returns a direction vector.
+        R v = v'
+
+        Args:
+            rotation (tuple[float, float, float]): A tuple of three angles in degrees (pan, tilt, roll).
+
+        Usage exampole:
+            rotation_matrix = self._get_rotation_matrix((0, 0, -90))
+            ray_direction = np.dot(rotation_matrix, np.array([1, 0, 0]))
+        Returns:
+            np.ndarray: A 3x3 rotation matrix.
+        """
+        pan, tilt, roll = rotation
+
+        # Convert degrees to radians
+        tilt_rad = np.radians(tilt)
+        roll_rad = np.radians(roll)
+        pan_rad = np.radians(pan)
+
+        # Rotation matrix around the y-axis (pan) yaw
+        R_y = np.array([
+            [np.cos(pan_rad), 0, -np.sin(pan_rad)],
+            [0, 1, 0],
+            [np.sin(pan_rad), 0, np.cos(pan_rad)]
+        ])
+
+        # Rotation matrix around the z-axis (pitch)
+        R_z = np.array([
+            [np.cos(tilt_rad), -np.sin(tilt_rad), 0],
+            [np.sin(tilt_rad), np.cos(tilt_rad), 0],
+            [0, 0, 1]
+        ])
+
+        # Rotation matrix around the x-axis (roll)
+        R_x = np.array([
+            [1, 0, 0],
+            [0, np.cos(roll_rad), -np.sin(roll_rad)],
+            [0, np.sin(roll_rad), np.cos(roll_rad)]
+        ])
+
+        # Combined rotation matrix
+        return np.dot(np.dot(R_x, R_z), R_y)
+
+    @staticmethod
+    def _degrees_to_vector(rotation: th.rotation) -> np.ndarray:
         """
         Convert angles in degrees (tilt, roll, pan) to a direction base vector.
 
@@ -207,7 +262,7 @@ class Renderer:
         ])
 
         # Combined rotation matrix
-        R = np.dot(np.dot(R_x, R_y), R_z)
+        R = np.dot(np.dot(R_x, R_z), R_y)
 
         # Initial direction vector (assuming forward direction along the z-axis)
         initial_vector = np.array([1, 0, 0]) # (x, y, z)

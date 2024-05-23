@@ -23,12 +23,4 @@ class ObjType:
     light = "light"
     camera = "camera"
 
-# Eventi za UI
-class UIEvent:
-    quit = "quit"
-    update_screen = "update_screen"
-    update_image = "update_image"
-
 # Eventi za working
-class WorkingEvent:
-    quit = "quit"
