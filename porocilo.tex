@@ -1,0 +1,69 @@
+\documentclass[titlepage]{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage[utf8]{inputenc}
+\usepackage{setspace}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{listings}[style=Matlab-editor]
+\usepackage{matlab-prettifier}
+
+
+\title{Sledenje žarku v neevklidskih prostorih}
+\author{Blaž Bergant, Martin Jereb, Matjaž Pogačnik}
+\date{Matematično modeliranje, maj 2024}
+\begin{document}
+
+\doublespacing
+
+\maketitle
+\newpage
+\tableofcontents
+\newpage
+
+
+\section{Uvod}
+Algoritem sledenje žarku (\textit{ang. Ray Tracing}) je priljubljen algoritem, uporabljen v računalniški grafiki, ki simulira realistično osvetlitev prizorov. Temelji na ideji sledenja žarka svetlobe po prizoru, izračunavanju njegovega preseka z objekti in odbijanju v drugo smer. Običajno ta algoritem uporabljamo v običajnem evklidskem prostoru, saj predstavlja resnični svet. Vendar pa lahko algoritem implementiramo tudi v drugih (neevklidskih) prostorih, da dobimo zanimive vizualne rezultate. To bo glavna naloga tega projekta.
+
+\section{Sledenje žarkom}
+"Sceno" predstavimo z enačbami ravnin oblike:
+\begin{equation}
+f(x, y, z) = 0. bla bla
+\end{equation}
+\section {Implementacija osnovnega algoritma ray tracing}
+Implementirali smo osnovni algoritem sledenja žarkov. Naš program je sposoben upodobiti preprost prizor z osnovnim senčenjem. 
+A SMO TO KEJ DODAL AL NE ???Vse druge razširitve, kot so odsevi in mehko senčenje, so izbirne, saj niso v ospredju tega projekta. ?????
+
+\subsection{Metoda Intersection}
+Raylaga kode 
+
+
+\section{Implementacija algoritma sledenje žarkom za tri dimenzionalni ploščati torus} 
+T3
+f .
+\section{Implementacija algoritma sledenje žarkom za 2-sphere}
+Suggestion: first just try to plot one geodesic
+using the method described above and then move to ray tracing.
+\section {Primerjava metode sledenje žarku v evklidskem in neevklidskem prostoru}
+What are the characteristics of each space? If you find any
+interesting behaviours report on them and try to explain them
+
+\section{Razdelitev dela}
+\begin{itemize}
+  \item Blaž Bergant: DOPIŠI SAM
+  \item Martin Jereb: ogrodje poročila, implementacija razreda Torus, priprava PowerPoint predstavitve
+  \item Matjaž Pogačnik: DOPIŠI SAM 
+\end{itemize}
+
+
+\section{Viri}
+\begin{itemize}
+  \item Kovač, G. (2023). \textit{Sledenje žarku v neevklidskih
+prostorih} (Diplomska naloga). Ljubljana: [G. Kovač].
+  \item Kovač, G. (2024). \textit{Ray tracing in Non-euclidean spaces}. Ljubljana: [G. Kovač].
+\item Zalar, A. \textit{Mathematical Modelling, Lecture Notes} (2024). Ljubljana: [A. Zalar].\textit{}
+\end{itemize}
+
+\section{Priloga}
+TUKI PRIDE KODA AL PA SLIKE AL KARKOL K NE BO PASAL V POROČILO
+
+\end{document}
