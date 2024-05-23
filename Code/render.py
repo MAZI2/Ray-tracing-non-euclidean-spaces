@@ -72,7 +72,7 @@ class Renderer:
         for i in range(res_x):
             for j in range(res_y):
                 # Zračunam ray
-                direction_vector = self._degrees_to_vector(ray_direction)
+                direction_vector = self._degrees_to_vector(ray_direction) # SLOW!!!!!!
                 ray = _Ray(camera.position, direction_vector)
                 color = self._trace_ray(ray)
                 
@@ -101,7 +101,8 @@ class Renderer:
     def _trace_ray(self, ray: _Ray):
         """Traces the ray through the scene and returns the color of the pixel."""
         # Za debug return random
-        return (np.random.randint(0, 255), np.random.randint(0, 255), np.random.randint(0, 255))
+        # return (np.random.randint(0, 255), np.random.randint(0, 255), np.random.randint(0, 255))
+        return (255, 0, 255)
 
     # def _intersection(self, ray: _Ray, step_size: float, max_steps: int) -> th.position:
     #     """Returns the first intersection of the ray with the scene."""
