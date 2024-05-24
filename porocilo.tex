@@ -6,6 +6,7 @@
 \usepackage{amsmath}
 \usepackage{listings}[style=Matlab-editor]
 \usepackage{matlab-prettifier}
+\usepackage{url}
 
 
 \title{Sledenje žarku v neevklidskih prostorih}
@@ -24,28 +25,58 @@
 \section{Uvod}
 Algoritem sledenje žarku (\textit{ang. Ray Tracing}) je priljubljen algoritem, uporabljen v računalniški grafiki, ki simulira realistično osvetlitev prizorov. Temelji na ideji sledenja žarka svetlobe po prizoru, izračunavanju njegovega preseka z objekti in odbijanju v drugo smer. Običajno ta algoritem uporabljamo v običajnem evklidskem prostoru, saj predstavlja resnični svet. Vendar pa lahko algoritem implementiramo tudi v drugih (neevklidskih) prostorih, da dobimo zanimive vizualne rezultate. To bo glavna naloga tega projekta.
 
+\section{Cilji}
+Cilji za to projektno nalogo so implementacija "osnovnega" algortima sledenje žarkom v evklidskem prostoru, njegova nadgradnja, da deluje tudi v neevklidskem prostoru na ploščatem torusu in 2-sferi ter primerjava delovanja v evklidskem in neevklidskem prostoru.
+
 \section{Sledenje žarkom}
-"Sceno" predstavimo z enačbami ravnin oblike:
-\begin{equation}
-f(x, y, z) = 0. bla bla
-\end{equation}
+
+Predstavljajmo si, da smo na plaži v naši najljubši obalni turistični destinaciji in gledamo, kako bližnja barka pluje v sončni zahod. Nam, na obali zgleda, da se poleg oddaljevanja tudi "pogreza" v tla. Zakaj pa je temu tako? \\
+
+To je ravno zaradi potovanja žarkov. Ker smo v evklidskem prostoru, bo žarek potoval naravnost in nas zaradi ukrivljenosti Zemlje tako, po določeni razdalji ne bo več dosegel. Sedaj, pa si predstavljajmo, da bi lahko barko kljub oddaljevanju še vedno videli celotno. Ta posebna zmožnost, bi nam bila omogočena v neevklidskem prostoru. In sicer še bolj natančno, v sferičnem neevklidskem prostoru.\\
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\linewidth]{Screenshot 2024-05-25 at 00.37.45.png}
+    \caption{Primerjava [Vir: G. Kovač]}
+    \label{Slika:enter-label}
+\end{figure}
+
+Kaj pa pravzaprav je neevklidski prostor?
+Neevklidski prostor je preprosto prostor, ki ne sledi pravilom evklidske geometrije. Torej prostor ni raven ampak je ukrivljen, vsota kotov v trikotniku je večja ali pa manjša od 180 stopinj... Neevklidski prostor delimo na več različnih geometrij med katerimi so recimo hiperbolična geometrija, eliptična geometrija, sferična geometrija, projektivna geometrija... 
+
+
+
 \section {Implementacija osnovnega algoritma ray tracing}
 Implementirali smo osnovni algoritem sledenja žarkov. Naš program je sposoben upodobiti preprost prizor z osnovnim senčenjem. 
-A SMO TO KEJ DODAL AL NE ???Vse druge razširitve, kot so odsevi in mehko senčenje, so izbirne, saj niso v ospredju tega projekta. ?????
+A SMO TO KEJ DODAL AL NE ???Vse druge razširitve, kot so odsevi in mehko senčenje, so izbirne, saj niso v ospredju tega projekta. ????? TUKI JE TREBA OPISAT POSTOPEK KAKO ZA PRVO VPRAŠANJE 
 
 \subsection{Metoda Intersection}
-Raylaga kode 
+Razlaga kode 
 
 
 \section{Implementacija algoritma sledenje žarkom za tri dimenzionalni ploščati torus} 
-T3
-f .
+
+\subsection{Kaj je tri dimenzionalni ploščati torus?}
+BOM NAPISU
+
+\subsection{Razlaga kode}
+
+BOM ŠE NAPISU
+
 \section{Implementacija algoritma sledenje žarkom za 2-sphere}
 Suggestion: first just try to plot one geodesic
 using the method described above and then move to ray tracing.
+
+\subsection{Kaj je 2-sphere?}
+
+\subsection{Razlaga kode}
+PREDZADNJE VPRAŠANJE 
+
 \section {Primerjava metode sledenje žarku v evklidskem in neevklidskem prostoru}
 What are the characteristics of each space? If you find any
 interesting behaviours report on them and try to explain them
+
+ZADNJE VPRAŠANJE 
 
 \section{Razdelitev dela}
 \begin{itemize}
@@ -60,7 +91,8 @@ interesting behaviours report on them and try to explain them
   \item Kovač, G. (2023). \textit{Sledenje žarku v neevklidskih
 prostorih} (Diplomska naloga). Ljubljana: [G. Kovač].
   \item Kovač, G. (2024). \textit{Ray tracing in Non-euclidean spaces}. Ljubljana: [G. Kovač].
-\item Zalar, A. \textit{Mathematical Modelling, Lecture Notes} (2024). Ljubljana: [A. Zalar].\textit{}
+  \item Zalar, A. \textit{Mathematical Modelling, Lecture Notes} (2024). Ljubljana: [A. Zalar].
+    \item Wikipedia. \textit{Non-Euclidean Geometry}. Wikipedia, Wikimedia Foundation (2024).\url{https://en.wikipedia.org/wiki/Non-Euclidean_geometry}
 \end{itemize}
 
 \section{Priloga}
