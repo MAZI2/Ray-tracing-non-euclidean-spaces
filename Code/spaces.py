@@ -3,27 +3,64 @@
 import typehints as th
 import numpy as np
 import math
+from typing import Tuple, List, Callable
+
+
+from objects import _IntersectableObject
 
 # Vsi space morjo bit otroci _Space classa, in povozt vse njen metode.
 
 class _Space:
     name: str = "Pozabu si me preimenovat!"
 
-    def move(self, position: th.position, direction: th.direction , step) -> th.position:
-        """Premakne ray ki se začne v točki position(x, y, z) za step_size v smeri direction(u, v, w)"""
-        pass
+    @staticmethod
+    def find_intersection(position: np.ndarray, direction: np.ndarray, max_distance: float, scene: Callable, step_size: float, tollerance: float) -> Tuple[_IntersectableObject, th.position]:
+        """Returns the first intersection of the ray with the scene.
+        Args:
+            position: The starting position of the ray.
+            direction: The direction of the ray.
+            step_size: The step size for the ray.
+            max_distance: The maximum distance the ray can travel.
+            objects: The objects in the scene.
+        Returns:
+            The point of intersection"""
+        raise NotImplementedError
+    
 
-
+#
 class Euclidean(_Space):
 
     def __init__(self):
         self.name = "Euclidean"
     
-    def move(self, position: th.position, direction: th.direction , step) -> th.position:
-        x = position[0] + step * direction[0]
-        y = position[1] + step * direction[1]
-        z = position[2] + step * direction[2]
-        return (x, y, z)
+    @staticmethod
+    def find_intersection(position: np.ndarray, direction: np.ndarray, max_distance: float, scene: Callable, step_size: float, tollerance: float) -> Tuple[_IntersectableObject, th.position]:
+        objects: List[_IntersectableObject] = scene.objects
+
+        current_position = np.array(position, dtype=np.float64) # Copy the position so we don't change the original
+        current_position += direction * step_size * 2.0 # Move the position a bit forward to avoid self-intersection
+
+        signs = {obj: obj.sign(current_position) for obj in objects}
+        traveled_distance = step_size * 2 # count for self intersection correction
+        intersected_object = None
+
+        while step_size >= tollerance and traveled_distance <= max_distance: # Break if step size is too small or max distance is reached
+            # Step forward
+            current_position += direction * step_size
+            traveled_distance += step_size
+
+            # Check signs of all objects
+            for obj in objects:
+                current_sign = obj.sign(current_position)
+                if current_sign != signs[obj]:
+                    # Sign changed, halve the step size and step back
+                    current_position -= direction * step_size
+                    traveled_distance -= step_size
+                    step_size *= 0.5
+                    intersected_object = obj
+                    break  # exit for loop
+
+        return intersected_object, current_position  # Or return an appropriate result if an intersection is found
 
 # Torus
 class Torus(_Space):

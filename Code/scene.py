@@ -5,19 +5,16 @@ import time
 
 import typehints as th
 from spaces import _Space, Euclidean
-from objects import _Scene_object
+from objects import _SceneObject, _ObjectTypes
 
 
 
 class Scene:
-    space: Type[_Space]
-    scene_contents: Dict[str, Type[_Scene_object]]
-    signs: List[int]
     help_dict = {
         "add": "Usage: add <name> type=<object/light/camera> [position=(x, y, z)] [rotation=(u, v, w)] [visible=bool] \nFor spheare: [radious=float]",}
 
-    def __init__(self, space: Type[_Space] = Euclidean(), 
-                 scene_contents: Dict[str, Type[_Scene_object]] = None):
+    def __init__(self, space: Type[_Space] = None, 
+                 scene_contents: Dict[str, Type[_SceneObject]] = None):
         self.space = space if space else Euclidean()
         self.scene_contents = scene_contents if scene_contents else dict()
         self.signs = list()
@@ -25,15 +22,17 @@ class Scene:
     # Get scene_contents by type
     @property
     def objects(self):
-        return [obj for obj in self.scene_contents.valu() if th.ObjType.object in obj.type]
+        return [obj for obj in self.scene_contents.values() if _ObjectTypes.intersectable_object in obj.type]
 
     @property
     def lights(self):
-        return [obj for obj in self.scene_contents.values() if th.ObjType.light in obj.type]
+        # For now all the objects just use the first light...
+        return [obj for obj in self.scene_contents.values() if _ObjectTypes.light in obj.type]
     
     @property
     def cameras(self):
-        return [obj for obj in self.scene_contents.values() if th.ObjType.camera in obj.type]
+        # For now all the objects just use the first camera...
+        return [obj for obj in self.scene_contents.values() if _ObjectTypes.camera in obj.type]
     
     # Controlling the scene
     def move(self, **kwargs):
@@ -82,7 +81,7 @@ class Scene:
             return
 
         # PREASIGNED MODE
-        obj: Type[_Scene_object] = self.scene_contents[name]
+        obj: Type[_SceneObject] = self.scene_contents[name]
         if "dx" in kwargs:
             obj.pos_x += kwargs["dx"]
         if "dy" in kwargs:

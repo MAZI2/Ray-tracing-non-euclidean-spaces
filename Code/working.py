@@ -7,7 +7,7 @@ from ui import UI
 from scene import Scene
 from render import Renderer
 from spaces import Euclidean
-from objects import Plane, Light, Camera
+from objects import Plane, Light, Camera, Sphere
 
 import logging
 logger = logging.getLogger(__name__)
@@ -37,8 +37,11 @@ class _WorkingThread(threading.Thread):
     def __init__(self) -> None:
         super().__init__()
         self.daemon = True # Kill thread when main thread dies
-        self.scene = Scene(Euclidean(), {"plane": Plane("plane", (10, 0, 0)), "light": Light("light", (10, 10, 0), ), "camera": Camera("camera", (0, 0, 0), (0, 0, 0))})
-        self.renderer = Renderer(self.scene, (800, 600))
+        self.scene = Scene(Euclidean(), {"sphere1": Sphere("sphere", (3, 0, 0), 1, (255, 0, 255)), 
+                                         "sphere2": Sphere("sphere2", (1.8, 0.8, 1), 0.5, (0, 255, 255)), 
+                                         "light": Light("light", (0, 3, 3), ), 
+                                         "camera": Camera("camera", (0, 0, 0), (0, 0, 0), 127)})
+        self.renderer = Renderer(self.scene, (320, 240))
 
     def run(self):
         while True:
