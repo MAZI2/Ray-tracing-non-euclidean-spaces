@@ -10,7 +10,7 @@ direction = Tuple[float, float, float] # (x, y, z) 0-inf
 rotation = Tuple[float, float, float] # (u, v, w) 0-360 (deg)
 
 # Barva
-color = Tuple[int, int, int] # (r, g, b) 0-255
+rgb = Tuple[int, int, int] # (r, g, b) 0-255
 
 # Resolucija
 resolution = Tuple[int, int] # (width, height) 0-inf

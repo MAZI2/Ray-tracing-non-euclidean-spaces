@@ -1,12 +1,13 @@
 import threading
 import queue
-from typing import List
+import re
+from typing import List, Tuple
 
 import typehints as th
 from ui import UI
 from scene import Scene
 from render import Renderer
-from spaces import Euclidean
+from spaces import Euclidean, FlatTorus, TwoSphere
 from objects import Plane, Light, Camera, Sphere
 
 import logging
@@ -37,11 +38,13 @@ class _WorkingThread(threading.Thread):
     def __init__(self) -> None:
         super().__init__()
         self.daemon = True # Kill thread when main thread dies
-        self.scene = Scene(Euclidean(), {"sphere1": Sphere("sphere", (3, 0, 0), 1, (255, 0, 255)), 
-                                         "sphere2": Sphere("sphere2", (1.8, 0.8, 1), 0.5, (0, 255, 255)), 
-                                         "light": Light("light", (0, 3, 3), ), 
-                                         "camera": Camera("camera", (0, 0, 0), (0, 0, 0), 127)})
-        self.renderer = Renderer(self.scene, (320, 240))
+        self.scene = Scene({"sphere1": Sphere((3, 0, 0), 1, (255, 0, 255)), 
+                            "sphere2": Sphere((1.8, 0.8, 1), 0.2, (0, 255, 255)), 
+                            # "plane": Plane((0, -2, 0), (0, 1, 0), (255, 100, 0)),
+                            "light": Light((0, 3, 3), ), 
+                            "camera": Camera((0, 0, 0), (0, 0, 0), 127),
+                            "flattorus": FlatTorus((10, 10, 10), 5)})
+        self.renderer = Renderer(self.scene)
 
     def run(self):
         while True:
@@ -52,12 +55,12 @@ class _WorkingThread(threading.Thread):
                     return
                 continue
 
-            tokens = line.split(" ")
+            tokens = self._split_line(line)
             command = tokens[0]
             if len(tokens) > 1:
-                kwargs = self._parse_kwargs(tokens[1:])
-                kwargs["name"] = tokens[1]
+                args, kwargs = self._parse_kwargs(tokens[1:])
             else:
+                args = []
                 kwargs = {}
 
             if command == "quit":
@@ -65,14 +68,21 @@ class _WorkingThread(threading.Thread):
             elif command == "list":
                 self.scene.list()
             elif command == "move":
-                self.scene.move(**kwargs)
+                self.scene.move(*args, **kwargs)
             elif command == "rotate":
-                self.scene.rotate(**kwargs)
+                self.scene.rotate(*args, **kwargs)
+            elif command == "set_attribute":
+                self.scene.set_attribute(*args, **kwargs)
+            elif command == "add":
+                self.scene.add(*args, **kwargs)
+            elif command == "remove":
+                self.scene.remove(*args)
             elif command == "render":
-                image = self.renderer.render(**kwargs)
-                UI.set_image(image)
+                if self.scene.render_check():
+                    image = self.renderer.render(**kwargs)
+                    UI.set_image(image)
             elif command == "help":
-                help()
+                self.scene.help(*args)
             else:
                 print("Unknown command. Try 'help' for a list of commands.")
 
@@ -90,10 +100,27 @@ class _WorkingThread(threading.Thread):
     # Helper methods
 
     @staticmethod
-    def _parse_kwargs(args: List[str]):
-        kwargs = {}
+    def _split_line(line: str) -> List[str]:
+        tokens = re.findall(r'[^\s=]+=[^\s]*\(.*?\)|[^\s()]+', line)
+        return tokens
+
+    @staticmethod
+    def _parse_kwargs(args: List[str]) -> Tuple[tuple, dict]:
+        return_args = list()
+        kwargs = dict()
         for arg in args:
             if "=" in arg:
                 key, value = arg.split("=", 1)
-                kwargs[key] = float(value)  # Convert to float if you expect numerical values
-        return kwargs
+                # Value is eather a float or a string or a tuple
+                try:
+                    value = float(value)
+                except ValueError:
+                    if value[0] == "(" and value[-1] == ")":
+                        value = tuple(map(float, value[1:-1].split(", ")))
+                    else:
+                        pass
+                kwargs[key] = value
+            else:
+                return_args.append(arg)
+        return_args = tuple(return_args)
+        return (return_args, kwargs)

@@ -1,41 +1,33 @@
 # Kar mu je podano zrenderja.
 
-from typing import List, Type
+from typing import List, Type, Callable, Tuple
 import numpy as np
 import pygame
+import time
 
 import typehints as th
 from scene import Scene
-from spaces import _Space, Euclidean, Torus, TwoSphere
+from spaces import _Space, Euclidean, FlatTorus, TwoSphere
 from objects import _IntersectableObject, Light, Camera
+from utilities import vector_uvw
 
 import logging
 logger = logging.getLogger(__name__)
 
 class Renderer:
     
-    def __init__(self, scene: Type[Scene], resolution: th.resolution = (800, 600)):
+    def __init__(self, scene: Type[Scene]):
         self.scene = scene
-        # TODO Resolution dj v render, tukej "save path" in save funkcija
-        self.resolution = resolution # (width, height) 0-inf
-    
-    @property
-    def resolution(self) -> th.resolution:
-        return (self.resolution_x, self.resolution_y)
-    
-    @resolution.setter
-    def resolution(self, resolution: th.resolution):
-        self.resolution_x, self.resolution_y = resolution
 
-    def render(self, step_size: float = 0.1, max_distance: float = 4.0, tolerance: float = 0.0001) -> np.ndarray:
+    def render(self, resolution: th.resolution = (320, 240)) -> np.ndarray:
         """Renders the scene and returns the image."""
 
         # Par stvari nastavm
         camera: Type[Camera] = self.scene.cameras[0]
-        cam_u, cam_v, cam_w = camera.rotation
+        cam_u, cam_v, cam_w = camera.orientation
         fov = camera.fov # Po diagonali
 
-        res_x, res_y = self.resolution
+        res_x, res_y = resolution
 
         # Zračunam kot med diagonalo slike glede na razmerje med širino in višino
         kot = np.arctan(res_x / res_y) # Kot med diagonalo in širino "slike"
@@ -56,7 +48,7 @@ class Renderer:
         # Debug
         logger.info(f"Rendering scene {res_x}x{res_y} with fov {fov}.")
         logger.debug(f"""\n    Camera position: {camera.position}
-    Camera direction: {camera.rotation}
+    Camera direction: {camera.orientation}
     Initial ray direction deg: {ray_direction_deg}
     fov_x: {fov_x}, fov_y: {fov_y}
     kot_step: {kot_step}""")
@@ -65,11 +57,14 @@ class Renderer:
         print("|start..........................................................................................end|", )
         izpisanih_pikic = 0
 
+        # Merjenje časa
+        srart = time.time()
+
         # Za vsak piksel v sliki
         for i in range(res_x):
             for j in range(res_y):
-                ray_direction_vec = self._degrees_to_vector(ray_direction_deg)
-                image[i, j] = self._trace_ray(camera.position, ray_direction_vec, max_distance, step_size, tolerance)
+                ray_direction_vec = vector_uvw.degrees_to_vector(ray_direction_deg)
+                image[i, j] = self._trace_ray(camera.position, ray_direction_vec)
 
                 # Vsak kot slike izpiše
                 if j == 0 or j == res_y - 1:
@@ -86,100 +81,128 @@ class Renderer:
             if (i / res_x) * 100 > izpisanih_pikic:
                 print(".", end="", flush=True)
                 izpisanih_pikic += 1
-        
+
+        end = time.time()
+        logger.info(f"Rendering took {end - srart} seconds.")
         return image
 
-    # HELPER FUNCTIONS
 
-    def _trace_ray(self, position: np.ndarray, direction: np.ndarray, max_distance: float, step_size: float, tolerance: float) -> th.color: #TODO Should i use np arrays or tuples?
+    # Tracing rays functions
+    def _trace_ray(self, position: np.ndarray, direction: np.ndarray) -> np.ndarray:
         """Traces ray, returns its color."""
         light: Light = self.scene.lights[0]
         space: _Space = self.scene.space
+        
 
         # Find the intersection with the scene
-        intersected_object, intersection_point = space.find_intersection(position, direction, max_distance, self.scene, step_size, tolerance)
+        intersected_object, intersection_point = self.find_intersection(position, direction)
         if not intersected_object:
             return (0, 0, 0) # Black
         
         # Does the pixel hit anything before the light?
-        light_direction = np.array([light.pos_x - intersection_point[0], light.pos_y - intersection_point[1], light.pos_z - intersection_point[2]])
+        light_direction = np.array([light.x - intersection_point[0], 
+                                    light.y - intersection_point[1], 
+                                    light.z - intersection_point[2]])
         light_distance = np.linalg.norm(light_direction)
         light_direction = light_direction / light_distance # Normalize
 
         # Check if the light is visible
-        shadow_object, _ = space.find_intersection(intersection_point, light_direction, light_distance, self.scene, step_size, tolerance)
+        shadow_object, _ = self.find_intersection(intersection_point, light_direction, light_distance, Euclidean())
         if shadow_object:
-            return (intersected_object.color_r // 4, intersected_object.color_g // 4, intersected_object.color_b // 4)
+            r, g, b = intersected_object.rgb
+            return (r // 4, g // 4, b // 4)
         
         # Return the object color
-        return (intersected_object.color_r, intersected_object.color_g, intersected_object.color_b)
+        return intersected_object.rgb
+
+    def find_intersection(self, position: np.ndarray, 
+                          direction: np.ndarray,
+                          max_distance: float = float("inf"),
+                          space = None) -> Tuple[_IntersectableObject, th.position]:
+        if not space: space: Type[_Space] = self.scene.space
+        
+        objects: List[_IntersectableObject] = self.scene.objects
+        space_name: str = space.name
+        cur_position = np.array(position, dtype=np.float64) # Copy the position so we don't change the original
+
+        # If a space implements its own intersection function, use that
+        if hasattr(space, "intersects") and space.intersects(np.array([0, 0, 0]), np.array([1, 0, 0]),
+                                                             list(), float("inf")) != -1:
+            return space.intersects(position, direction, objects, max_distance)
+        
+        # Else this is the default intersection function:
+        intersected_object = None
+        closest_distance = float("inf")
+
+        # What object intersectst closest?
+        for obj in objects:
+            if hasattr(obj, space_name):
+                method = getattr(obj, space_name)
+                distance = method(cur_position, direction)
+            else:
+                # TODO Sekantna metoda
+                pass
+            if distance is not None and distance <= closest_distance and distance <= max_distance:
+                closest_distance = distance
+                intersected_object = obj
+
+        # Calculate the intersection point
+        intersection_point = cur_position + direction * closest_distance
+
+        return intersected_object, intersection_point
+
+        # If object has a function with the same name as the space, use that to get t
+        if hasattr(self.scene.space, "intersects"):
+            return self.scene.space.intersects(position, direction, objects, max_distance)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     @staticmethod
-    def _vector_to_degrees(v: np.ndarray) -> tuple:
-        """
-        Convert a direction vector into angles in degrees (pan, tilt, 0).
-        """
-        # Normalize vector to avoid scale issues
-        norm_v = v / np.linalg.norm(v)
-        x, y, z = norm_v
+    def find_intersection_with_steps(position: np.ndarray, 
+                               direction: np.ndarray, 
+                               max_distance: float, 
+                               scene: Callable, 
+                               step_size: float, 
+                               tollerance: float) -> Tuple[_IntersectableObject, th.position]:
+        objects: List[_IntersectableObject] = scene.objects
 
-        # Calculate tilt (assuming rotation around z-axis affects x and y)
-        u = np.arctan2(z, x)  # Project on xy-plane and calculate angle
-        u = np.degrees(u)  # Convert radians to degrees
+        current_position = np.array(position, dtype=np.float64) # Copy the position so we don't change the original
+        current_position += direction * step_size * 2.0 # Move the position a bit forward to avoid self-intersection
 
-        # Calculate pan (assuming rotation around y-axis affects x and z)
-        v = np.arctan2(y, np.sqrt(x**2 + z**2))  # Rotate back from z to align with x-axis
-        v = np.degrees(v)  # Convert radians to degrees
+        signs = {obj: obj.sign(current_position) for obj in objects}
+        traveled_distance = step_size * 2 # count for self intersection correction
+        intersected_object = None
 
-        # Convert radians to degrees
-        return np.array([u, v, 0])
+        while step_size >= tollerance and traveled_distance <= max_distance: # Break if step size is too small or max distance is reached
+            # Step forward
+            current_position += direction * step_size
+            traveled_distance += step_size
 
-    @staticmethod
-    def _degrees_to_vector(rotation: np.ndarray) -> np.ndarray:
-        """
-        Convert angles in degrees (pan, tilt, 0) to a direction base vector.
-        """
-        u, v, _ = rotation # (pan, tilt, roll), roll not used right now.
+            # Check signs of all objects
+            for obj in objects:
+                current_sign = obj.sign(current_position)
+                if current_sign != signs[obj]:
+                    # Sign changed, halve the step size and step back
+                    current_position -= direction * step_size
+                    traveled_distance -= step_size
+                    step_size *= 0.5
+                    intersected_object = obj
+                    break  # exit for loop
 
-        # Convert degrees to radians
-        u = np.radians(u)
-        v = np.radians(v)
-
-        x = np.cos(u) * np.cos(v)
-        y = np.sin(v)
-        z = np.sin(u) * np.cos(v)
-
-        return np.array([x, y, z])
-
-    @staticmethod
-    def _get_rotation_matrix(rotation: np.ndarray) -> np.ndarray:
-        pan, tilt, roll = rotation
-
-        # Convert degrees to radians
-        tilt_rad = np.radians(tilt)
-        roll_rad = np.radians(roll)
-        pan_rad = np.radians(pan)
-
-        # Rotation matrix around the y-axis (pan) 
-        R_y = np.array([
-            [np.cos(pan_rad), 0, -np.sin(pan_rad)],
-            [0, 1, 0],
-            [np.sin(pan_rad), 0, np.cos(pan_rad)]
-        ])
-
-        # Rotation matrix around the z-axis (tilt) pitch 
-        R_z = np.array([
-            [np.cos(tilt_rad), -np.sin(tilt_rad), 0],
-            [np.sin(tilt_rad), np.cos(tilt_rad), 0],
-            [0, 0, 1]
-        ])
-
-        # Rotation matrix around the x-axis (roll) 
-        R_x = np.array([
-            [1, 0, 0],
-            [0, np.cos(roll_rad), -np.sin(roll_rad)],
-            [0, np.sin(roll_rad), np.cos(roll_rad)]
-        ])
-
-        # Combined rotation matrix
-        return np.dot(np.dot(R_x, R_z), R_y)
+        return intersected_object, current_position  # Or return an appropriate result if an intersection is found
