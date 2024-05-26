@@ -38,7 +38,7 @@ To je ravno zaradi potovanja žarkov. Ker smo v evklidskem prostoru, bo žarek p
     \centering
     \includegraphics[width=0.5\linewidth]{Screenshot 2024-05-25 at 00.37.45.png}
     \caption{Primerjava [Vir: G. Kovač]}
-    \label{Slika:enter-label}
+    \label{Slika:Primerjava}
 \end{figure}
 
 Kaj pa pravzaprav je neevklidski prostor?
@@ -68,7 +68,7 @@ Običajni torusi so ukrivljeni in se jim ukrivljenost po površini spreminja. Pl
     \centering
     \includegraphics[width=0.5\linewidth]{Screenshot 2024-05-26 at 02.02.11.png}
     \caption{Žarek v dvodimenzionalnem ploščatem torusu}
-    \label{fig:enter-label}
+    \label{Slika:Žarek v dvodimenzionalnem ploščatem torusu}
 \end{figure}
 
 
@@ -82,6 +82,15 @@ x &= \left( \text{x} + \text{korak} \cdot \text{smer x }\right) \mod 1 \\
 y &= \left( \text{y} + \text{korak} \cdot \text{smer y }\right) \mod 1 \\
 z &= \left( \text{z} + \text{korak} \cdot \text{smer z }\right) \mod 1
 \end{align*}
+
+Ko program poženemo, dobimo lep vizualni rezultat.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{flattours.png}
+    \caption{Rezultat "ray tracinga" za tri dimenzionalni ploščati torus}
+    \label{Slika:Rezultat "ray tracinga" za tri dimenzionalni ploščati torus}
+\end{figure}
+Na sliki lahko opazimo, da so elementi simetrično preslikani, prav tako pa lahko vidimo, da so tudi različno osenčeni.
 
 \section{Implementacija algoritma sledenje žarkom za 2-sphere}
 Suggestion: first just try to plot one geodesic
@@ -128,4 +137,3 @@ prostorih} (Diplomska naloga). Ljubljana: [G. Kovač].
 TUKI PRIDE KODA AL PA SLIKE AL KARKOL K NE BO PASAL V POROČILO
 
 \end{document}
-
