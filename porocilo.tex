@@ -7,7 +7,7 @@
 \usepackage{listings}[style=Matlab-editor]
 \usepackage{matlab-prettifier}
 \usepackage{url}
-
+\usepackage{float}
 
 \title{Sledenje žarku v neevklidskih prostorih}
 \author{Blaž Bergant, Martin Jereb, Matjaž Pogačnik}
@@ -57,11 +57,31 @@ Razlaga kode
 \section{Implementacija algoritma sledenje žarkom za tri dimenzionalni ploščati torus} 
 
 \subsection{Kaj je tri dimenzionalni ploščati torus?}
-BOM NAPISU
+Tri dimenzionalni ploščati torus \( \mathbb{T}^3_{pl} \), je tridimenzionalna mnogoterost v evklidski geometriji. \( \mathbb{T}^3_{pl} \) dobimo tako, da "zlepimo" nasprotne ploskve enotske kocke \([0,1] \times [0,1] \times [0,1] \subset \mathbb{R}^3 \), kjer je \(\mathbb{R}^3\) tridimenzionalni evklidski prostor. Formalno pravimo, da je \( \mathbb{T}^3_{pl} \) kvocient \(\mathbb{R}^3\) z grupo translacij:
+\begin{equation}
+(x, y, z) \to (x \pm 1, y, z), \quad (x, y, z) \to (x, y \pm 1, z), \quad (x, y, z) \to (x, y, z \pm 1).
+\end{equation}
+
+Običajni torusi so ukrivljeni in se jim ukrivljenost po površini spreminja. Ploščati torus pa ima konstantno ukrivljenost v vsaki točki. Poimenovanje ploščat izhaja iz tega, ker je povsod podoben navadni evklidski ravnini. Podobno velja za tridimenzionalni ploščati torus, kjer pri sledenju žarka lahko uporabimo kar osnovno definicijo žarka. Ključna razlika med algoritmom v \( \mathbb{R}^3 \) in \( \mathbb{T}^3_{pl} \) pa je, da bomo tokrat dodali še en korak, ker moramo žarek omejiti na enotsko kocko. Dokler se nahajamo znotraj njenih meja, ne naredimo nobenih popravkov. Ko pa ugotovimo presečišče z eno od ploskev, moramo žarek preslikati na nasprotno ploskev. To lahko storimo tako, da preprosto od žarka odštejemo normalo ploskve, na kateri smo.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{Screenshot 2024-05-26 at 02.02.11.png}
+    \caption{Žarek v dvodimenzionalnem ploščatem torusu}
+    \label{fig:enter-label}
+\end{figure}
+
+
 
 \subsection{Razlaga kode}
 
-BOM ŠE NAPISU
+Ključni vpogled, je da žarek omejimo, kar lahko v programskih jezikih storimo preprosto z operatorjem modulo. Rešitev torej dobimo, ko žarek preslikamo z modulo 1 in tako rezultat omejimo na enotsko kocko.
+        
+\begin{align*}
+x &= \left( \text{x} + \text{korak} \cdot \text{smer x }\right) \mod 1 \\
+y &= \left( \text{y} + \text{korak} \cdot \text{smer y }\right) \mod 1 \\
+z &= \left( \text{z} + \text{korak} \cdot \text{smer z }\right) \mod 1
+\end{align*}
 
 \section{Implementacija algoritma sledenje žarkom za 2-sphere}
 Suggestion: first just try to plot one geodesic
@@ -92,7 +112,7 @@ ZADNJE VPRAŠANJE
 prostorih} (Diplomska naloga). Ljubljana: [G. Kovač].
   \item Kovač, G. (2024). \textit{Ray tracing in Non-euclidean spaces}. Ljubljana: [G. Kovač].
   \item Zalar, A. \textit{Mathematical Modelling, Lecture Notes} (2024). Ljubljana: [A. Zalar].
-    \item Wikipedia. \textit{Non-Euclidean Geometry}. Wikipedia, Wikimedia Foundation (2024).\url{https://en.wikipedia.org/wiki/Non-Euclidean_geometry}
+    \item \textit{Non-Euclidean geometry}. (2024). Pridobljeno 24.5.2024 s spletne strani \url{https://en.wikipedia.org/wiki/Non-Euclidean_geometry.}
 \end{itemize}
 
 \section{Priloga}
