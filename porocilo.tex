@@ -1,4 +1,6 @@
 \documentclass[titlepage]{article}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
 \usepackage{graphicx} % Required for inserting images
 \usepackage[utf8]{inputenc}
 \usepackage{setspace}
@@ -8,13 +10,15 @@
 \usepackage{matlab-prettifier}
 \usepackage{url}
 \usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
 
 \title{Sledenje žarku v neevklidskih prostorih}
 \author{Blaž Bergant, Martin Jereb, Matjaž Pogačnik}
 \date{Matematično modeliranje, maj 2024}
 \begin{document}
 
-\doublespacing
+%\doublespacing
 
 \maketitle
 \newpage
@@ -92,14 +96,187 @@ Ko program poženemo, dobimo lep vizualni rezultat.
 \end{figure}
 Na sliki lahko opazimo, da so elementi simetrično preslikani, prav tako pa lahko vidimo, da so tudi različno osenčeni.
 
-\section{Implementacija algoritma sledenje žarkom za 2-sphere}
-Suggestion: first just try to plot one geodesic
-using the method described above and then move to ray tracing.
 
-\subsection{Kaj je 2-sphere?}
+\section{Sledenje žarkom za 2-sphere}
+Žarek na dvodimenzionalni sferi bo potoval po najravnejši poti, tj. geodetki. Geodetka je krivulja po sferi, kjer zahtevamo, da je 
+pospešek v smeri normale tangentne ravnine 0. Majhen korak po geodetki je v $uv$ ravnini opisan s sistemom dveh diferencialnih enačb drugega reda.
+\begin{equation}
+    \frac{d^{2}u}{dt^{2}}-\cos(u)\sin(u)\frac{dv}{dt}\frac{dv}{dt}=0
+\end{equation}
+\begin{equation}
+    \frac{d^{2}v}{dt^{2}}+2\cot(u)\frac{du}{dt}\frac{dv}{dt}=0
+\end{equation}
 
-\subsection{Razlaga kode}
-PREDZADNJE VPRAŠANJE 
+Po krivulji se bomo v nadaljnjih algorimih premikali s pomočjo aproksimacijskih metod, zato moramo sistem DE drugega reda preoblikovati v 
+sistem DE prvega reda. Za to uvedemo 4 nove spremenljivke
+\begin{equation}
+\begin{split}
+    &y_{1}=u, \quad y_{2}=\frac{dy_{1}}{dt}, \\
+    &y_{3}=v, \quad y_{4}=\frac{dy_{3}}{dt}
+\end{split}
+\end{equation}
+Dobimo sistem 4 DE prvega reda
+\begin{equation}
+\begin{split}
+    &\frac{dy_{1}}{dt}=y_{2} \\
+    &\frac{dy_{2}}{dt}=\cos(y_{1})\sin(y_{1})y^{2}_{4} \\
+    &\frac{dy_{3}}{dt}=y_{4} \\
+    &\frac{dy_{4}}{dt}=-2\cot(y_{1})y_{2}y_{4}
+\end{split}
+\end{equation}
+Ker se bomo premikali po $uv$ ravnini, moramo koordinate v kartezičnem koordinatnem sistemu transformirati. Sfera v $\mathbb{R}^3$ je 
+parametrizirana kot
+\begin{equation}
+    \begin{split}
+        &X=R\cos(v)\sin(u) \\
+        &Y=R\sin(v)\sin(u) \\
+        &Z=R\cos(u)
+    \end{split}
+\end{equation}
+$u$ lahko dobimo kot
+\begin{equation}
+        u=\cos \left( \frac{X}{R} \right)^{-1}
+\end{equation}
+za $v$ pa uporabimo prvi dve enačbi
+\begin{equation}
+    \begin{split}
+        &\frac{R\sin(u)Y}{R\sin(u)X}=\frac{\sin(v)}{\cos(v)} \\
+        &v=\tan \left(\frac{Y}{X} \right)^{-1}
+    \end{split}
+\end{equation}
+
+Za sledenje žarku po geodetki, si moramo poleg začetne točke izbrati še začetno smer 
+$\left( \frac{du}{dt}, \frac{dv}{dt} \right)$. Tako kot pri ostalih prostorih v nalogi, bomo uporabili "FOV" način 
+potovanja žarkov iz kamere. Od tu dalje imamo svobodo pri izbiri sfer, po katerih bodo žarki potovali. V tej nalogi smo za 
+vsak žarek izračunali središče sfere z najnižjo $z$ koordinato in polmerom $R$, žarki pa bodo vedno "zavijali" navzdol, torej se bodo premikali po poldnevnikih.
+
+\begin{figure}
+\centering
+\begin{minipage}{.5\textwidth}
+  \centering
+  \includegraphics[width=0.8\linewidth]{rays_top.png}
+  \captionof{figure}{Potovanje žarkov od zgoraj}
+  \label{fig:test1}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}
+  \centering
+  \includegraphics[height=0.77\linewidth]{rays_side.png}
+  \captionof{figure}{Potovanje žarkov s strani}
+  \label{fig:test2}
+\end{minipage}
+\end{figure}
+
+Središča sfer žarkov se bodo torej prav tako nahajala na sferi s polmerom $R$ in središem v kameri $T_{0}$. Za različne smeri žarkov $\vec{v}_{i}$ je bilo središče $C_{i}$ izračunano po sledečem postopku
+\newline
+\bigskip
+Izračunamo vektorski produkt med navpičnim vektorjem in smerjo $\vec{v}_{i}$. Dobljeni vektor je normala na ravnino krožnice z iskanim središčem, ki gre skozi $T_{0}$
+\begin{equation}
+    \vec{n}_{i}=(0, 0, -1) \times \vec{v}_{i}$
+\end{equation}
+Vektor, ki od $T_{0}$ kaže proti iskanemu središču bo ležal v tej ravnini, poleg tega pa bo pravokoten na $\vec{v}_{i}$. Ponovno uporabimo vektorski
+produkt
+\begin{equation}
+    \vec{c}_{i}= \vec{v}_{i} \times \vec{n}_{i} 
+\end{equation}
+Krajevni vektor središča nato dobimo tako, da se premaknemo za polmer $R$ v smeri $\vec{c}_{i}$
+\begin{equation}
+    \vec{r}_{ci}=\frac{\vec{c}_{i}}{\left \| \vec{c}_{i}\right \|} \cdot R + T_{0}
+\end{equation}
+
+Za korak po geodetki bomo $T_{0}$ najprej premaknili za vektor $\vec{r}_{ci}$, tako da bo središče sfere v koordinatnem izhodišču, naredili korak, nato pa novo točko $T_{i1}$ premaknili nazaj.
+Ker želimo potovati po poldnevnikih, bomo za začetno smer $\left( \frac{du}{dt}, \frac{dv}{dt} \right)$ izbrali $\left( \pm1, 0 \right)$. Korak po poldnevniku bo v $xy$ ravnini tako že pravnilno obrnjen, določiti pa moramo predznak premika po $u$ glede na to, ali se premikamo v pravo smer $\vec{v}_{i}$. To preverimo s skalarnim produktom
+\newline
+\bigskip
+Naredimo korak v smeri $\left( \1, 0 \right)$, in označimo dobljeno točko s $T_{t}$. Vektor v smeri od $T_{0}$ do $T_{t}$ označimo z $\vec{v}_{t}$.
+Izračunamo skalarni produkt
+\begin{equation}
+    a= \vec{v}_{i} \vec{v}_{t}^T
+\end{equation}
+Če se premikamo v pravi smeri, bo $a > 0$, drugače moramo za začetno smer izbrati negativni predznak.
+
+V nadaljevanju se premikamo po geodetki z eno izmed aproksimacijskih metod, problem pa predstavlja $\cot(y_{1})$ v eni izmed enačb, ki ima pole pri 
+$k\pi$, $k \in \mathbb{Z}$. Da se izognemo temu ne smemo uporabljati fiksne dolžine koraka, temveč moramo uporabiti adaptivne metode, kot je DOPRI5.
+%TODO: add more + opis delovanja adaptivne metode
+Algoritmi, ki implementirajo opisane metode so predstavljeni v naslednjem poglavju.
+
+\newpage
+\section{Algorimi za 2-sphere}
+Funkcije \textbf{sphereCenter}, \textbf{initializeSphere}, \textbf{uvToVec} implementirajo formule 10, 11, 12, 7, 8, 6, funkciji \textbf{checkIntersect} in \textbf{distance} pa glede na objekte 
+podane s $f(x,y,z)$ preverjata predznak rezultata $f(T_{n})$ in razdaljo do objekta. %TODO: opisi formule za izracun razdalje do sfere in ravnine
+\begin{algorithm}
+    \caption{Sledenje žarku na sferi $\mathbb{S}^{2}$}
+\begin{algorithmic}
+    \Function{traceRayNonEuclidean}{$T_{0}$, $\vec{v}$, step, maxIt, objects, R}
+
+    \State $T_{n}$, $T_{n+1}$ $\gets$ $T_{0}$
+    \State center, signs, I 
+    \\
+  \While{true}
+    \If{step == maxIt}
+    \State \Return{-1}
+    \ElsIf{step == 0}
+      \State center $\gets$ \textbf{sphereCenter}($T_{0}$, d, R)
+      \\
+      \Comment{žarku poiščemo središče sfere}
+      \State $T_{m}$ $\gets$ $T_{0} - \hbox{center}$
+      \Comment{sfero premaknemo v $(0, 0)$}
+      \State $\vec{y}_{n}$ $\gets$ \textbf{initializeSphere}($T_{0}$, R) %TODO: tukaj cekiramo tudi smer!
+      \Comment{pripravimo začetni $\vec{y}$}
+    \EndIf
+    \\
+    \State $\vec{y}_{n+1}, \hbox{step}$ $\gets$ \textbf{DOPRI5}($\vec{y}_{n}$, step) %TODO: tukaj uporabili neko adaptivno metodo, kjer lahko sproti spremljamo step, da lahko potem uporabimo za exactIntersect
+    \Comment{korak po geodetki}
+    \State $T_{n+1}$ $\gets$ \textbf{uvToVec}($\vec{y}_{n+1}$, R) + center %vzame y1 in y3 in jih pretvori v x y z
+    \\
+    \State object $\gets$ \textbf{checkIntersects}($T_{n+1}$, objects, signs)
+    \\
+    \Comment{preverimo, če smo sekali objekt}
+    \\
+    \Comment{če da, poiščemo natančno presečišče}
+
+    \If{object != NULL}
+      \State I $\gets$ \textbf{findIntersection}($T_{n}$, object, signs, $\vec{y}_{n}$, step, R, center, $\varepsilon$)
+      \State \Return{I}
+    \Else
+      \State $\vec{y}_{n}$ $\gets$ $\vec{y}_{n+1}$
+      \State $T_{n}$ $\gets$ $T_{n+1}$
+    \EndIf
+  \EndWhile
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+    \caption{Iskanje natančnejšega presečišča}
+\begin{algorithmic}
+    \Function{findIntersection}{$T_{0}$, object, signs, $\vec{y}_{n}$, step, R, center, $\varepsilon$}
+
+    \State $T_{n}$, $T_{n+1}$ $\gets$ $T_{0}$
+    \\
+  \While{true}
+    \If{\textbf{distance}($T_{n}$, object) $<$ $\varepsilon$}
+      \State \Return{$T_{n}$}
+    \EndIf
+    \State $\vec{y}_{n+1}, \hbox{step}$ $\gets$ \textbf{euler}($\vec{y}_{n}$, step)
+    \State $T_{n+1}$ $\gets$ \textbf{uvToVec}($\vec{y}_{n+1}$, R) + center
+    \\
+    \Comment{korak po geodetki z Eulerjevo metodo}
+    \State object $\gets$ \textbf{checkIntersects}($T_{n+1}$, object, signs)
+    \\
+    \Comment{preverimo, če smo sekali objekt}
+    \\
+    \Comment{če da, razpolovimo korak}
+
+    \If{object != NULL}
+        \State step $\gets$ step/2
+    \Else
+      \State $\vec{y}_{n}$ $\gets$ $\vec{y}_{n+1}$
+      \State $T_{n}$ $\gets$ $T_{n+1}$
+    \EndIf
+  \EndWhile
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
 
 \section {Primerjava metode sledenje žarku v evklidskem in neevklidskem prostoru}
 
@@ -137,3 +314,4 @@ prostorih} (Diplomska naloga). Ljubljana: [G. Kovač].
 TUKI PRIDE KODA AL PA SLIKE AL KARKOL K NE BO PASAL V POROČILO
 
 \end{document}
+
