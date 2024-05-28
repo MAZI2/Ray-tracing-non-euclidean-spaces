@@ -4,15 +4,19 @@ import typehints as th
 import numpy as np
 from typing import Tuple, List, Callable
 
+from objects import _IntersectableObject, Sphere, Plane, Light
+from utilities import Ray
+from typehints import _ObjectTypes
 
-from objects import _IntersectableObject, Sphere, Plane, _ObjectTypes
+import logging
 
 # ---------------------------- Stuff that makes it work ----------------------------
 
 class _Space:
     def __init__(self) -> None:
         """ADD izpeljane formule funkcije ki direkt vrnejo parameter preseka v self.quick_intersect!!!"""
-        self.quick_intersect = dict()
+        super().__init__()
+        self.quick_intersect = dict() 
         self.type = _ObjectTypes.space
         self.name = "space"
 
@@ -25,9 +29,9 @@ class _Space:
             setattr(self, attribute, value)
         else:
             print(f"Attribute {attribute} does not exist.")
+    
     # Če ta prostor rabi posebno funkcijo za presečišče uporabi:
-    def intersects(self, position: np.ndarray = np.array([0, 0, 0]),
-                   direction: np.ndarray = np.array([0, 0, 0]),
+    def intersects(self, ray: Ray = Ray(np.array([0, 0, 0]), np.array([0, 0, 0]), np.array([0, 0, 0])),
                    objects: List[_IntersectableObject] = list(),
                    max_distance: float = float("inf")) -> Tuple[_IntersectableObject, th.position]:
         """Če prostor ne rabi posebne funkcije za presečišče, ne implementiraj te funkcije!
@@ -35,8 +39,8 @@ class _Space:
         return -1
 
     # Če nima vsak objekt izpeljane formule uporabi:
-    def get_xyz(self, position: np.ndarray, direction: np.ndarray, t: float) -> np.ndarray:
-        """Če nimaš funkcije z izpeljano formulo za ta specifičn prostor, implementiraj to funkcijo.
+    def get_xyz(self, ray: Ray, t: float) -> np.ndarray:
+        """Vsak objekt more implementirat to funkcijo, ki vrne točko na raju pri parametru t.
         Returns a point (x, y, z) on the ray at the given parameter t."""
         raise NotImplementedError
     
@@ -50,7 +54,7 @@ class SpacesRegistry:
 
     @classmethod
     def get(cls, name: str) -> _Space:
-        return cls.spaces.get(name)
+        return cls.spaces.get(name)[0]
     
     @classmethod
     def get_all(cls) -> dict:
@@ -64,11 +68,11 @@ class Euclidean(_Space):
         self.name = "euclidean"
 
     # Equation stuff
-    def get_xyz(self, position: np.ndarray, direction: np.ndarray, t: float) -> np.ndarray:
-        return position + direction * t
-SpacesRegistry.register("Euclidean", Euclidean, 
+    def get_xyz(self, ray: Ray, t: float) -> np.ndarray:
+        return ray.origin + ray.direction * t
+SpacesRegistry.register("euclidean", Euclidean, 
                               "Euclidean space is a normal 3D space.\n" + 
-                              "Usage: Euclidean")
+                              "      Usage: Euclidean")
 
 
 class FlatTorus(_Space):
@@ -95,34 +99,36 @@ class FlatTorus(_Space):
         self.a, self.b, self.c = boundry_size 
 
     # Equation stuff
-    def get_xyz(self, position: np.ndarray, direction: np.ndarray, t: float) -> np.ndarray:
-        x, y, z = position + direction * t
+    def get_xyz(self, ray: Ray, t: float) -> np.ndarray:
+        x, y, z = ray.origin + ray.direction * t
         x = x % self.a
         y = y % self.b
         z = z % self.c
         return np.array([x, y, z])
     
-    def intersects(self, position: np.ndarray,
-                   direction: np.ndarray,
+    def intersects(self, ray: Ray,
                    objects: List[_IntersectableObject],
-                   max_distance: float = float("inf")) -> Tuple[_IntersectableObject, th.position]:
+                   max_distance: float = float("inf")) -> Tuple[_IntersectableObject, np.ndarray]:
         # Prep
+        position = ray.origin.copy() # Copy position so we dont move the ray
+        direction = ray.direction # We dont change direction, if you do copy it!!!
+
         intersected_object = None
-        closest_distance = float("inf")
+        t_of_closest = float("inf")
         found_intersection = False
-        max_t, max_t_direction = self._max_t(position, direction)
+        max_t, max_t_direction = self._max_t(position, ray.direction)
 
         for _ in range(int(self.repetitions)):
             for obj in objects:
                 if hasattr(obj, "euclidean"): #If euclidean function is implemented
-                    distance = obj.euclidean(position, direction)
+                    t = obj.euclidean(position, ray.direction)
                 else:
                     # TODO Prepiš iz finc_intersection!!!
                     raise NotImplementedError
                 
-                if distance is not None and distance <= closest_distance and distance <= max_distance:
+                if t is not None and t <= t_of_closest and t <= max_distance:
                     # Update the closest object, break
-                    closest_distance = distance
+                    t_of_closest = t
                     intersected_object = obj
                     found_intersection = True
                 
@@ -131,15 +137,15 @@ class FlatTorus(_Space):
                 break
             else: 
                 # Update the position, max_t for the next for iteration
-                position = Euclidean.get_xyz(Euclidean(), position, direction, max_t)
+                position = Euclidean.get_xyz(Euclidean(), ray, max_t)
                 position[max_t_direction] = -position[max_t_direction] # Reflect
-                max_t, max_t_direction = self._max_t(position, direction)
+                max_t, max_t_direction = self._max_t(position, ray.direction)
 
         if not intersected_object:
             return None, None
         
         # Calculate the intersection point
-        intersection_point = Euclidean.get_xyz(Euclidean(), position, direction, closest_distance)
+        intersection_point = Euclidean.get_xyz(Euclidean(), position, direction, t_of_closest)
         return intersected_object, intersection_point
     
     def _max_t(self, position: np.ndarray, direction: np.ndarray) -> Tuple[float, int]:
@@ -164,9 +170,9 @@ class FlatTorus(_Space):
             raise ValueError("t < 0 -> ray is going away from the boundry. Is camera inside the boundry?")
         
         return (t, min_t_in_direction)
-SpacesRegistry.register("FlatTorus", FlatTorus, 
+SpacesRegistry.register("flattorus", FlatTorus, 
                               "FlatTorus space is like a normal space in a cube with sides (a, b, c) (in order x, y, z), and when a ray reaches one side it teleports to the other side.\n" + 
-                              "Usage: FlatTorus [boundry_size=(a, b, c)], [repetitions=10]")
+                              "      Usage: FlatTorus [boundry_size=(a, b, c)], [repetitions=10]")
 
 
 class TwoSphere(_Space):
@@ -181,11 +187,11 @@ class TwoSphere(_Space):
         return prev + f"R: {self.R:<10} "
 
     # Equation stuff
-    def get_xyz(self, position: np.ndarray, direction: np.ndarray, t: float) -> np.ndarray:
+    def get_xyz(self, ray: Ray, t: float) -> np.ndarray:
         pass
-SpacesRegistry.register("TwoSphere", TwoSphere, 
+SpacesRegistry.register("twosphere", TwoSphere, 
                               "TwoSphere space is a space where rays travel on the surface of a sphere with radius R.\n" + 
-                              "Usage: TwoSphere [R=2]")
+                              "      Usage: TwoSphere [R=2]")
 
 
 

@@ -3,7 +3,9 @@
 import typehints as th
 import numpy as np
 
-from utilities import vector_uvw
+from utilities import vector_uvw, Ray
+from typehints import _ObjectTypes
+
 
 # -------------------- Stuff that makes it work --------------------
 
@@ -61,14 +63,6 @@ class _SceneObject:
     def orientation(self, orientation: np.ndarray):
         self.u, self.v, self.w = orientation
 
-class _ObjectTypes:
-    """Types of objects that can be in the scene."""
-    object = "object"
-    light = "light"
-    camera = "camera"
-    space = "space"
-
-
 class ObjectsRegistry:
     """Register for all objects that exist"""
     _objects = dict()
@@ -115,7 +109,7 @@ class _IntersectableObject(_SceneObject):
         raise NotImplementedError
 
     # Space specific izpeljave: Ime funkcije more bit isti imenu prostora
-    def euclidean(self, position: np.ndarray, direction: np.ndarray) -> float:
+    def euclidean(self, ray: Ray) -> float:
         """Specifično izpeljane formule morjo met ime funkcije enako imenu prostora.
         Specifično izpeljana funkcija ki vrne parametr t kjer se ray seka za evklidski prostor."""
         raise NotImplementedError
@@ -145,13 +139,13 @@ class Sphere(_IntersectableObject):
         return squared_distance - squared_radius
     
     # For spaces:
-    def euclidean(self, position: np.ndarray, direction: float) -> float:
-        cur_position = position + direction * 0.001 # Move the position a bit forward ker mam nek weird bug
+    def euclidean(self, ray: Ray) -> float:
+        cur_position = ray.origin + ray.direction * 0.001 # Move the position a bit forward ker mam nek weird bug
         L = np.subtract(cur_position, self.position) # Točka premice - središče krogle
 
         # a, b, c iz enačbe za ničle kvadratne funkcije:
-        a = np.dot(direction, direction)
-        b = 2 * np.dot(L, direction)
+        a = np.dot(ray.direction, ray.direction)
+        b = 2 * np.dot(L, ray.direction)
         c = np.dot(L, L) - self.radius**2
 
         # Diskriminanta:
@@ -173,7 +167,7 @@ class Sphere(_IntersectableObject):
             return t1
         return t1 if t1 < t2 else t2
 ObjectsRegistry.register("sphere", Sphere, 
-                                "Use: type=sphere position=<(x, y, z)> radius=<radius> [rgb=(r, g, b)] [visible=<True/False>]")
+                                "Use: Sphere position=<(x, y, z)> radius=<radius> [rgb=(r, g, b)] [visible=<True/False>]")
 
 class Plane(_IntersectableObject):
     def __init__(self, position: np.ndarray = np.array([0, 0, 0]),
@@ -225,11 +219,11 @@ class Plane(_IntersectableObject):
         return np.dot(self.normal, point) - self.d
     
     # For spaces:
-    def euclidean(self, position: np.ndarray, direction: float) -> float:
-        cur_position = position + direction * 0.001 # Move the position a bit forward ker mam nek weird bug
+    def euclidean(self, ray: Ray) -> float:
+        cur_position = ray.origin + ray.direction * 0.001 # Move the position a bit forward ker mam nek weird bug
 
         stevec = np.dot(self.normal, np.subtract(self.position, cur_position))
-        imenovalec = np.dot(self.normal, direction)
+        imenovalec = np.dot(self.normal, ray.direction)
 
         # Če je imenovalec 0, pol vzporedno z ravnino
         if np.isclose(imenovalec, 0):
@@ -243,7 +237,7 @@ class Plane(_IntersectableObject):
         
         return t
 ObjectsRegistry.register("plane", Plane, 
-                                "Use: type=plane position=<(x, y, z)> normal=<(u, v, 0)> [rgb=(r, g, b)] [visible=<True/False>]")
+                                "Use: Plane position=<(x, y, z)> normal=<(u, v, 0)> [rgb=(r, g, b)] [visible=<True/False>]")
 
 
 # -------------------- Lights --------------------
@@ -260,7 +254,7 @@ class Light(_SceneObject):
     def __str__(self) -> str:
         return f"{super().__str__()} rgb: {self.rgb}"
 ObjectsRegistry.register("light", Light, 
-                                "Use: type=light position=<(x, y, z)> [rgb=(r, g, b)]")
+                                "Use: Light position=<(x, y, z)> [rgb=(r, g, b)]")
 
 
 # -------------------- Cameras --------------------
@@ -278,4 +272,4 @@ class Camera(_SceneObject):
     def __str__(self) -> str:
         return f"{super().__str__()} fov: {self.fov}"
 ObjectsRegistry.register("camera", Camera, 
-                                "Use: type=camera position=<(x, y, z)> orientation=<(u, v, w)> [fov=<fov>]")
+                                "Use: Camera position=<(x, y, z)> orientation=<(u, v, w)> [fov=<fov>]")

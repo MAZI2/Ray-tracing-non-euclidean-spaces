@@ -7,6 +7,8 @@ import typehints as th
 from spaces import _Space, Euclidean, SpacesRegistry
 from objects import _SceneObject, _ObjectTypes, ObjectsRegistry
 
+import logging
+logger = logging.getLogger(__name__)
 
 class Scene:
     
@@ -148,17 +150,33 @@ class Scene:
         for key in kwargs.keys():
             obj.set_attribute(key, kwargs[key])
 
-    def add(self, *args, **kwargs):
-        if len(args) < 1:
-            print("Name or type not provided.")
+    def add(self, *args, **kwargs):        
+        # Get name kjer kol je že
+        if "name" in kwargs:
+            name: str = kwargs["name"]
+            name_in_kwargs = True
+        elif len(args) > 0:
+            name = args[0]
+            name_in_kwargs = False
+        else:
+            print("Name not provided.")
             help("add")
             return
         
-        name = args[0]
+        # Get type iz kodrkol je že
         if "type" in kwargs:
-            type = kwargs["type"]
-        else:
-            type = args[0]
+            type: str = kwargs["type"]
+        elif name_in_kwargs and len(args) == 0:
+            print("Type not provided.")
+            help("add")
+            return
+        elif name_in_kwargs and len(args) < 2:
+            logger.warning("Type not provided, using name as type.")
+            type: str = args[0]
+        else: 
+            type: str = args[1]
+
+        type = type.lower()
 
         if type not in ObjectsRegistry.get_all().keys():
             print(f"Type {type} does not exist.")
@@ -186,12 +204,18 @@ class Scene:
             help("set_space")
             return
         
-        space = args[0]
-        if space not in ObjectsRegistry.get_all().keys():
+        if "space" in kwargs:
+            space: str = kwargs["space"]
+        else:
+            space: str = args[0]
+
+        space = space.lower()
+        
+        if space not in SpacesRegistry.get_all().keys():
             print(f"Space {space} does not exist.")
             return
         
-        self.space = ObjectsRegistry.get(space)(**kwargs)
+        self.space = SpacesRegistry.get(space)(**kwargs)
 
     def list(self):
             """Lists all the contents of the scene."""

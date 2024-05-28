@@ -1,13 +1,17 @@
 # Helper functions and stuff
 import numpy as np
+import time
 
+
+
+# ------------------ Classes ------------------
 class vector_uvw:
     @staticmethod
     def degrees_to_vector(rotation: np.ndarray) -> np.ndarray:
         """
         Convert angles in degrees (pan, tilt, 0) to a direction base vector.
         """
-        u, v, _ = rotation # (pan, tilt, roll), roll not used right now.
+        u, v = rotation # (pan, tilt, roll), roll not used right now.
 
         # Convert degrees to radians
         u = np.radians(u)
@@ -37,7 +41,7 @@ class vector_uvw:
         v = np.degrees(v)  # Convert radians to degrees
 
         # Convert radians to degrees
-        return np.array([u, v, 0])
+        return np.array([u, v])
 
     @staticmethod
     def get_rotation_matrix(rotation: np.ndarray) -> np.ndarray:
@@ -71,3 +75,72 @@ class vector_uvw:
 
         # Combined rotation matrix
         return np.dot(np.dot(R_x, R_z), R_y)
+
+
+class Ray:
+    def __init__(self, origin: np.ndarray, direction: np.ndarray, direction_deg: np.ndarray = None):
+        self.origin = origin
+        self.direction = direction
+        self.direction_deg = direction_deg
+
+    def __str__(self):
+        return f"(origin={self.origin}, direction={self.direction}, direction_deg={self.direction_deg})"
+
+
+class Timer:
+    def __init__(self):
+        self.start_time = None
+
+    def start(self):
+        self.start_time = time.time()
+
+    def stop(self):
+        return time.time() - self.start_time
+
+
+import logging
+class Logger:
+    _log_filepath = 'log/raytracer.log'
+    _log_level = logging.DEBUG
+
+    @classmethod
+    def configure(cls, filepath: str, level: int):
+        cls._log_filepath = filepath
+        cls._log_level = level
+        cls.log_to_terminal = False
+        cls.log_to_file = True
+
+    @staticmethod
+    def setup_logger(name: str) -> logging.Logger:
+        logger = logging.getLogger(name)
+        if not logger.handlers:  # Ensure no duplicate handlers
+            # File handler
+            file_handler = logging.FileHandler(Logger._log_filepath)
+            file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            file_handler.setFormatter(file_formatter)
+            logger.addHandler(file_handler)
+
+            # Stream handler (console)
+            stream_handler = logging.StreamHandler()
+            stream_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            stream_handler.setFormatter(stream_formatter)
+            logger.addHandler(stream_handler)
+
+            logger.setLevel(Logger._log_level)
+        return logger
+
+# ------------------ Methods ------------------
+
+import os
+import sys
+import contextlib
+@contextlib.contextmanager
+def suppress_stdout():
+    with open(os.devnull, 'w') as devnull:
+        old_stdout = sys.stdout
+        sys.stdout = devnull
+        try:
+            yield
+        finally:
+            sys.stdout = old_stdout
+

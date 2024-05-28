@@ -1,10 +1,12 @@
 # Tukej definiraš sceno, main pol požene renderjanje itd.
-import numpy as np
-
+# Imports:
 from ui import _UIThread
 from working import Working
+from utilities import suppress_stdout
 
-
+# Suppress pygame initialization message
+with suppress_stdout():
+    import pygame
 
 
 #    y
@@ -23,12 +25,6 @@ from working import Working
 # - v: rotation around z axis
 # - w: rotation around x axis
 
-# ------------------ Logging ------------------
-import logging
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 # ------------------ Main ------------------
 
 def main():

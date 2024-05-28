@@ -2,6 +2,7 @@ import threading
 import queue
 import re
 from typing import List, Tuple
+import difflib
 
 import typehints as th
 from ui import UI
@@ -9,9 +10,9 @@ from scene import Scene
 from render import Renderer
 from spaces import Euclidean, FlatTorus, TwoSphere
 from objects import Plane, Light, Camera, Sphere
+from utilities import setup_logger
 
-import logging
-logger = logging.getLogger(__name__)
+logger = setup_logger(__name__)
 
 class _WorkingEvents:
     quit = "quit"
@@ -38,16 +39,34 @@ class _WorkingThread(threading.Thread):
     def __init__(self) -> None:
         super().__init__()
         self.daemon = True # Kill thread when main thread dies
+        self.name = "WorkingThread" # Name the thread
+        
         self.scene = Scene({"sphere1": Sphere((3, 0, 0), 1, (255, 0, 255)), 
                             "sphere2": Sphere((1.8, 0.8, 1), 0.2, (0, 255, 255)), 
                             # "plane": Plane((0, -2, 0), (0, 1, 0), (255, 100, 0)),
                             "light": Light((0, 3, 3), ), 
-                            "camera": Camera((0, 0, 0), (0, 0, 0), 127),
-                            "flattorus": FlatTorus((10, 10, 10), 5)})
-        self.renderer = Renderer(self.scene)
+                            "camera": Camera((0, 0, 0), (0, 0, 0), 50),
+                            "euclidean": Euclidean()})
+        self.renderer = Renderer()
+
+        self.running = True
 
     def run(self):
-        while True:
+        commands = {
+            "quit": self.quit,
+            "list": self.scene.list,
+            "move": self.scene.move,
+            "rotate": self.scene.rotate,
+            "set_attribute": self.scene.set_attribute,
+            "add": self.scene.add,
+            "remove": self.scene.remove,
+            "render": self.render,
+            "render_sync": self.render_sync,
+            "set_space": self.scene.set_space,
+            "help": self.scene.help,
+        }
+
+        while self.running:
             print()
             line = input("Raytracer>  ")
             if not line:
@@ -63,31 +82,23 @@ class _WorkingThread(threading.Thread):
                 args = []
                 kwargs = {}
 
-            if command == "quit":
-                break
-            elif command == "list":
-                self.scene.list()
-            elif command == "move":
-                self.scene.move(*args, **kwargs)
-            elif command == "rotate":
-                self.scene.rotate(*args, **kwargs)
-            elif command == "set_attribute":
-                self.scene.set_attribute(*args, **kwargs)
-            elif command == "add":
-                self.scene.add(*args, **kwargs)
-            elif command == "remove":
-                self.scene.remove(*args)
-            elif command == "render":
-                if self.scene.render_check():
-                    image = self.renderer.render(**kwargs)
-                    UI.set_image(image)
-            elif command == "help":
-                self.scene.help(*args)
+            if command in commands:
+                try:
+                    commands[command](*args, **kwargs)
+                except TypeError as e:
+                    print(f"Error: {e}")
+                    print(f"Usage for '{command}': {commands[command].__doc__}")
             else:
-                print("Unknown command. Try 'help' for a list of commands.")
+                # Provide suggestions for close matches
+                suggestions = difflib.get_close_matches(command, commands.keys())
+                if suggestions:
+                    print(f"Unknown command '{command}'. Did you mean: {', '.join(suggestions)}?")
+                else:
+                    print(f"Unknown command '{command}'. Try 'help' for a list of commands.")
 
-        if self.check_queue():
-            return
+
+            if self.check_queue():
+                return
 
     
     def check_queue(self):
@@ -97,6 +108,21 @@ class _WorkingThread(threading.Thread):
                 return True
         return False
 
+    # Commands with methods
+    def quit(self):
+        UI.stop_thread()
+        self.running = False
+    
+    def render(self, *args, **kwargs):
+        if self.scene.render_check():
+            kwargs["scene"] = self.scene
+            self.renderer.render(**kwargs)
+
+    def render_sync(self, *args, **kwargs):
+        if self.scene.render_check():
+            kwargs["scene"] = self.scene
+            self.renderer.render_sync(**kwargs)
+    
     # Helper methods
 
     @staticmethod
@@ -115,7 +141,7 @@ class _WorkingThread(threading.Thread):
                 try:
                     value = float(value)
                 except ValueError:
-                    if value[0] == "(" and value[-1] == ")":
+                    if len(value) > 2 and value[0] == "(" and value[-1] == ")":
                         value = tuple(map(float, value[1:-1].split(", ")))
                     else:
                         pass

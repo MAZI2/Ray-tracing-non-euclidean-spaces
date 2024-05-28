@@ -15,3 +15,10 @@ rgb = Tuple[int, int, int] # (r, g, b) 0-255
 # Resolucija
 resolution = Tuple[int, int] # (width, height) 0-inf
 
+# Tipi objektov k jih v scene dam v en dict
+class _ObjectTypes:
+    """Types of objects that can be in the scene."""
+    object = "object"
+    light = "light"
+    camera = "camera"
+    space = "space"

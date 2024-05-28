@@ -2,28 +2,147 @@
 
 from typing import List, Type, Callable, Tuple
 import numpy as np
-import pygame
+import multiprocessing
 import time
 
 import typehints as th
 from scene import Scene
-from spaces import _Space, Euclidean, FlatTorus, TwoSphere
+from spaces import _Space, Euclidean
 from objects import _IntersectableObject, Light, Camera
-from utilities import vector_uvw
+from ui import UI
+from utilities import  vector_uvw, Ray, Timer, Logger
 
-import logging
-logger = logging.getLogger(__name__)
+
+
+class _ColumnRenderer:
+
+    def setup(self):
+        self.logger = Logger.setup_logger()
+    
+    @staticmethod
+    def run(column_num: int, 
+                      res_y: int, 
+                      kot_step: float, 
+                      ray_origin: np.ndarray,
+                      ray_direction_deg: np.ndarray,
+                      objects: List[_IntersectableObject], 
+                      lights: List[Light], 
+                      space: _Space, 
+                      background_color: np.ndarray = np.array([0, 0, 0])) -> Tuple[np.ndarray, int]:
+        """Renders a single line of the image."""
+        # Setup logger
+        logger = setup_logger(f"_ColumnRenderer")
+
+        image = np.ndarray((res_y, 3), dtype=np.uint8)
+
+        # For each pixel in the column
+        for j in range(res_y):
+            ray_direction_vec = vector_uvw.degrees_to_vector(ray_direction_deg)
+            ray = Ray(ray_origin, ray_direction_vec, ray_direction_deg)
+            
+            image[j] = _ColumnRenderer._trace_ray(ray, objects, lights, space, background_color)
+
+            # Obrnem ray
+            ray_direction_deg[1] -= kot_step
+        
+
+        return image, column_num
+    
+    @staticmethod
+    def _trace_ray(ray: Ray, 
+                  objects: List[_IntersectableObject], 
+                  lights: List[Light],
+                  space: _Space,
+                  background_color: np.ndarray) -> np.ndarray:
+        """Traces ray, returns its color."""
+        light: Light =lights[0]
+        
+
+        # Find the intersection with the scene
+        intersected_object, intersection_point = _ColumnRenderer._find_intersection(ray, objects, space)
+        if not intersected_object:
+            return background_color # Black
+        
+        # Does the pixel hit anything before the light?
+        light_direction = np.array([light.x - intersection_point[0], 
+                                    light.y - intersection_point[1], 
+                                    light.z - intersection_point[2]])
+        light_distance = np.linalg.norm(light_direction)
+        light_direction = light_direction / light_distance # Normalize
+
+        # Check if the light is visible
+        new_ray = Ray(intersection_point, light_direction)
+        shadow_object, _ = _ColumnRenderer._find_intersection(new_ray, objects, Euclidean(), light_distance)
+        if shadow_object:
+            r, g, b = intersected_object.rgb
+            return (r // 4, g // 4, b // 4)
+        
+        # Return the object color
+        return intersected_object.rgb
+    
+    @staticmethod
+    def _find_intersection(ray: Ray,
+                          objects: List[_IntersectableObject],
+                          space: _Space,
+                          max_distance: float = float("inf")) -> Tuple[_IntersectableObject, np.ndarray]:
+        """Finds closest intersection of ray with scene using eather izpeljane formule k jih maš v objektih napisane
+        or sekantna metoda. Če ma space intersects funkcijo samo kličem tisto."""
+        space_name: str = space.name
+
+        # If a space implements its own intersection function, use that
+        if hasattr(space, "intersects") and space.intersects(ray, list(), float("inf")) != -1:
+            return space.intersects(ray, objects, max_distance)
+        
+        # Else this is the default intersection function:
+        intersected_object = None
+        t_of_closest = float("inf")
+
+        # What object intersectst closest?
+        for obj in objects:
+            if hasattr(obj, space_name): # Object ma izpeljano formulo k direkt vrne paremetr t
+                method = getattr(obj, space_name)
+                t = method(ray)
+            else:
+                # TODO Sekantna metoda
+                pass
+            if t is not None and t <= t_of_closest and t <= max_distance:
+                t_of_closest = t
+                intersected_object = obj
+
+        # Calculate the intersection point
+        if intersected_object:
+            intersection_point = space.get_xyz(ray, t_of_closest)
+            return intersected_object, intersection_point
+        else:
+            return None, None
+
 
 class Renderer:
     
-    def __init__(self, scene: Type[Scene]):
-        self.scene = scene
+    def __init__(self):
+        self.pool = multiprocessing.Pool(processes=multiprocessing.cpu_count(), ) 
+        self.manager = multiprocessing.Manager()
+        self.lock = self.manager.Lock()
 
-    def render(self, resolution: th.resolution = (320, 240)) -> np.ndarray:
+        # za merjenje časa renderiranja
+        self.timer = Timer()
+        self.num_recieved_rows = 0
+
+    def  __del__(self):
+        self.pool.close()
+        self.pool.join()
+
+    def render(self, scene: Scene, 
+               resolution: th.resolution = (320, 240),
+               parallel: bool = True,
+               background_color: np.ndarray = np.array([0, 0, 0], dtype=np.int8)):
         """Renders the scene and returns the image."""
+        # Nastavm praviln resolution na UI
+        resolution = (int(resolution[0]), int(resolution[1]))
+        UI.set_resolution(resolution)
 
-        # Par stvari nastavm
-        camera: Type[Camera] = self.scene.cameras[0]
+        # Par stvari si vn dobim
+        camera: Type[Camera] = scene.cameras[0]
         cam_u, cam_v, cam_w = camera.orientation
         fov = camera.fov # Po diagonali
 
@@ -39,121 +158,59 @@ class Renderer:
 
         # Initial smer raya zračunam kot polovica fov_x lavo in fov_y gor
         ray_direction_deg = np.array([cam_u - (fov_x / 2), 
-                             cam_v + (fov_y / 2),
-                             cam_w])
+                             cam_v + (fov_y / 2)])
 
         # Naredim nov image zadevo
-        image = np.ndarray((res_x, res_y, 3), dtype=np.uint8)
+        # image = np.ndarray((res_x, res_y, 3), dtype=np.uint8)
 
-        # Debug
-        logger.info(f"Rendering scene {res_x}x{res_y} with fov {fov}.")
+        # Print and debug
+        print("|start..........................................................................................end|")
         logger.debug(f"""\n    Camera position: {camera.position}
     Camera direction: {camera.orientation}
     Initial ray direction deg: {ray_direction_deg}
     fov_x: {fov_x}, fov_y: {fov_y}
     kot_step: {kot_step}""")
-        
-        # Za izpis pikic: 
-        print("|start..........................................................................................end|", )
-        izpisanih_pikic = 0
 
         # Merjenje časa
-        srart = time.time()
+        self.timer.start()
+        self.num_recieved_rows = 0
 
-        # Za vsak piksel v sliki
+        # Za vsako vrstico slike:
         for i in range(res_x):
-            for j in range(res_y):
-                ray_direction_vec = vector_uvw.degrees_to_vector(ray_direction_deg)
-                image[i, j] = self._trace_ray(camera.position, ray_direction_vec)
-
-                # Vsak kot slike izpiše
-                if j == 0 or j == res_y - 1:
-                    if i == 0 or i == res_x - 1:
-                        logger.debug(f"Ray {i} {j}: {ray_direction_vec}; {ray_direction_deg}")
-
-                # Obrnem ray
-                ray_direction_deg[1] -= kot_step
+            if parallel:
+                self.pool.apply_async(_ColumnRenderer.run, 
+                                      args=(i, res_y, kot_step, camera.position, ray_direction_deg.copy(), 
+                                            scene.objects, scene.lights, scene.space, background_color),
+                                      callback=lambda result: self._recieve_column(*result))
+            else:
+                column, new_i = _ColumnRenderer.run(i, res_y, kot_step, camera.position, ray_direction_deg.copy(), 
+                                                    scene.objects, scene.lights, scene.space, background_color)
+                UI.set_column(column, new_i)
+            
             # Obrnem ray
             ray_direction_deg[0] += kot_step
-            ray_direction_deg[1] = fov_y/2
 
-            # Izpis pikic
-            if (i / res_x) * 100 > izpisanih_pikic:
+        # Čas in izpis pikic
+        printed_dots = 0
+        while self.num_recieved_rows < res_x:
+            time.sleep(0.001)
+            if (self.num_recieved_rows / res_x) > printed_dots / 100:
+                printed_dots += 1
                 print(".", end="", flush=True)
-                izpisanih_pikic += 1
-
-        end = time.time()
-        logger.info(f"Rendering took {end - srart} seconds.")
-        return image
-
-
-    # Tracing rays functions
-    def _trace_ray(self, position: np.ndarray, direction: np.ndarray) -> np.ndarray:
-        """Traces ray, returns its color."""
-        light: Light = self.scene.lights[0]
-        space: _Space = self.scene.space
         
+        render_time = self.timer.stop()
+        print(f"\nRendered in {render_time:.2f} seconds.")
 
-        # Find the intersection with the scene
-        intersected_object, intersection_point = self.find_intersection(position, direction)
-        if not intersected_object:
-            return (0, 0, 0) # Black
-        
-        # Does the pixel hit anything before the light?
-        light_direction = np.array([light.x - intersection_point[0], 
-                                    light.y - intersection_point[1], 
-                                    light.z - intersection_point[2]])
-        light_distance = np.linalg.norm(light_direction)
-        light_direction = light_direction / light_distance # Normalize
+    def render_sync(self, scene: Scene, 
+                    resolution: th.resolution = (320, 240),
+                    background_color: np.ndarray = np.array([0, 0, 0], dtype=np.int8)):
+        self.render(scene, resolution, parallel=False, background_color=background_color)
 
-        # Check if the light is visible
-        shadow_object, _ = self.find_intersection(intersection_point, light_direction, light_distance, Euclidean())
-        if shadow_object:
-            r, g, b = intersected_object.rgb
-            return (r // 4, g // 4, b // 4)
-        
-        # Return the object color
-        return intersected_object.rgb
-
-    def find_intersection(self, position: np.ndarray, 
-                          direction: np.ndarray,
-                          max_distance: float = float("inf"),
-                          space = None) -> Tuple[_IntersectableObject, th.position]:
-        if not space: space: Type[_Space] = self.scene.space
-        
-        objects: List[_IntersectableObject] = self.scene.objects
-        space_name: str = space.name
-        cur_position = np.array(position, dtype=np.float64) # Copy the position so we don't change the original
-
-        # If a space implements its own intersection function, use that
-        if hasattr(space, "intersects") and space.intersects(np.array([0, 0, 0]), np.array([1, 0, 0]),
-                                                             list(), float("inf")) != -1:
-            return space.intersects(position, direction, objects, max_distance)
-        
-        # Else this is the default intersection function:
-        intersected_object = None
-        closest_distance = float("inf")
-
-        # What object intersectst closest?
-        for obj in objects:
-            if hasattr(obj, space_name):
-                method = getattr(obj, space_name)
-                distance = method(cur_position, direction)
-            else:
-                # TODO Sekantna metoda
-                pass
-            if distance is not None and distance <= closest_distance and distance <= max_distance:
-                closest_distance = distance
-                intersected_object = obj
-
-        # Calculate the intersection point
-        intersection_point = cur_position + direction * closest_distance
-
-        return intersected_object, intersection_point
-
-        # If object has a function with the same name as the space, use that to get t
-        if hasattr(self.scene.space, "intersects"):
-            return self.scene.space.intersects(position, direction, objects, max_distance)
+    # Helper functions
+    def _recieve_column(self, column: np.ndarray, column_num: int):
+        with self.lock:
+            self.num_recieved_rows += 1
+            UI.set_column(column, column_num)
 
 
 
@@ -173,36 +230,38 @@ class Renderer:
 
 
 
-    @staticmethod
-    def find_intersection_with_steps(position: np.ndarray, 
-                               direction: np.ndarray, 
-                               max_distance: float, 
-                               scene: Callable, 
-                               step_size: float, 
-                               tollerance: float) -> Tuple[_IntersectableObject, th.position]:
-        objects: List[_IntersectableObject] = scene.objects
 
-        current_position = np.array(position, dtype=np.float64) # Copy the position so we don't change the original
-        current_position += direction * step_size * 2.0 # Move the position a bit forward to avoid self-intersection
+# Old code
+    # @staticmethod
+    # def find_intersection_with_steps(position: np.ndarray, 
+    #                            direction: np.ndarray, 
+    #                            max_distance: float, 
+    #                            scene: Callable, 
+    #                            step_size: float, 
+    #                            tollerance: float) -> Tuple[_IntersectableObject, th.position]:
+    #     objects: List[_IntersectableObject] = scene.objects
 
-        signs = {obj: obj.sign(current_position) for obj in objects}
-        traveled_distance = step_size * 2 # count for self intersection correction
-        intersected_object = None
+    #     current_position = np.array(position, dtype=np.float64) # Copy the position so we don't change the original
+    #     current_position += direction * step_size * 2.0 # Move the position a bit forward to avoid self-intersection
 
-        while step_size >= tollerance and traveled_distance <= max_distance: # Break if step size is too small or max distance is reached
-            # Step forward
-            current_position += direction * step_size
-            traveled_distance += step_size
+    #     signs = {obj: obj.sign(current_position) for obj in objects}
+    #     traveled_distance = step_size * 2 # count for self intersection correction
+    #     intersected_object = None
 
-            # Check signs of all objects
-            for obj in objects:
-                current_sign = obj.sign(current_position)
-                if current_sign != signs[obj]:
-                    # Sign changed, halve the step size and step back
-                    current_position -= direction * step_size
-                    traveled_distance -= step_size
-                    step_size *= 0.5
-                    intersected_object = obj
-                    break  # exit for loop
+    #     while step_size >= tollerance and traveled_distance <= max_distance: # Break if step size is too small or max t is reached
+    #         # Step forward
+    #         current_position += direction * step_size
+    #         traveled_distance += step_size
 
-        return intersected_object, current_position  # Or return an appropriate result if an intersection is found
+    #         # Check signs of all objects
+    #         for obj in objects:
+    #             current_sign = obj.sign(current_position)
+    #             if current_sign != signs[obj]:
+    #                 # Sign changed, halve the step size and step back
+    #                 current_position -= direction * step_size
+    #                 traveled_distance -= step_size
+    #                 step_size *= 0.5
+    #                 intersected_object = obj
+    #                 break  # exit for loop
+
+    #     return intersected_object, current_position  # Or return an appropriate result if an intersection is found
