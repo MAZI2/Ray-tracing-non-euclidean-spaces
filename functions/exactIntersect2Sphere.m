@@ -1,7 +1,7 @@
-function [intersect, o] = exactIntersectTorus(T, d)
-% Ray trace for Flat 3D torus
+function [intersect, o] = exactIntersect2Sphere(T, d)
+% Ray trace for 2-Sphere
 % step
-h = 0.13;
+h = 0.1;
 % tolerance for exact intersect
 eps = 0.01;
 
@@ -31,16 +31,16 @@ Tn = T;
 Tnt = Tn;
 
 % max iterations
-maxit = 300;%300;
+maxit = 200;%300;
 
 % intersection point
 intersect = [];
 
+% 2sphere radius
+R = 2;
+
 % index of intersected object
 o = 0;
-
-% normalize direction
-d = d./norm(d);
 
 step = 0;
 while true
@@ -65,10 +65,41 @@ while true
         end
     end
    
+    % initialization of y1 y2 y3 y4
+    if(step == 0)
+        % find sphere center
+        Ce = sphereCenter(Tn, d, R);
+        
+        % move 2sphere to (0, 0)
+        Te = Tn-Ce;
+
+        % u
+        y1p=acos(Te(3)./R);
+        % if y1p is 0, move a bit forward to avoid cot(0)
+        if(y1p==0)
+            y1p=0.01;
+        end
+        % du
+        y2p=1;
+        % v
+        y3p=atan2(Te(2), Te(1));
+        % dv
+        y4p=0;
+
+        % get next point
+        [y1t, y2t, y3t, y4t, h] = euler(y1p, y2p, y3p, y4p, h);
+        D = uvToVec(y1t, y3t, R)+Ce-Tn;
+        % with dot product determine if the direction is correct
+        % otherwise change du direction
+        if(d*D'<0)
+            y2p=-1;
+        end
+        
+    end
     % get next point (perform step)
-    Tnt = Tn + h.*d;
-    % map to set boundaries [-7, 7]
-    Tnt = mapToCube(Tnt, -7, 7);
+    [y1t, y2t, y3t, y4t, h] = euler(y1p, y2p, y3p, y4p, h);
+    % next point actual coordinates
+    Tnt = uvToVec(y1t, y3t, R)+Ce;
 
     % check signs
     % h = h/2 if changed
@@ -92,7 +123,12 @@ while true
     
     % if the sign hasn't changed, move one step
     if(changed == 0)
+        y1p=y1t;
+        y2p=y2t;
+        y3p=y3t;
+        y4p=y4t;
         Tn = Tnt;
+
         %plot3(Tn(1), Tn(2), Tn(3), 'ro');
         %hold on;
     end
