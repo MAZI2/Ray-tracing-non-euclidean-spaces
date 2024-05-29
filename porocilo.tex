@@ -2,66 +2,62 @@
 \usepackage{algpseudocode}
 \usepackage{algorithm}
 \usepackage{graphicx} % Required for inserting images
-\graphicspath{ {./Images/} }
 \usepackage[utf8]{inputenc}
 \usepackage{setspace}
 \usepackage{amssymb}
 \usepackage{amsmath}
-\usepackage{listings}[style=Matlab-editor]
+\usepackage{listings}
 \usepackage{matlab-prettifier}
 \usepackage{url}
+\usepackage{hyperref}
 \usepackage{float}
 \usepackage{caption}
 \usepackage{subcaption}
+\graphicspath{ {./Images/} }
 
 \title{Sledenje žarku v neevklidskih prostorih}
 \author{Blaž Bergant, Martin Jereb, Matjaž Pogačnik}
 \date{Matematično modeliranje, maj 2024}
-\begin{document}
 
-%\doublespacing
+\begin{document}
 
 \maketitle
 \newpage
 \tableofcontents
 \newpage
 
-
 \section{Uvod}
-Algoritem sledenje žarku (\textit{ang. Ray Tracing}) je priljubljen algoritem, uporabljen v računalniški grafiki, ki simulira realistično osvetlitev prizorov. Temelji na ideji sledenja žarka svetlobe po prizoru, izračunavanju njegovega preseka z objekti in odbijanju v drugo smer. Običajno ta algoritem uporabljamo v običajnem evklidskem prostoru, saj predstavlja resnični svet. Vendar pa lahko algoritem implementiramo tudi v drugih (neevklidskih) prostorih, da dobimo zanimive vizualne rezultate. To bo glavna naloga tega projekta.
+Algoritem sledenja žarku (\textit{ang. Ray Tracing}) je priljubljen algoritem, uporabljen v računalniški grafiki, ki simulira realistično osvetlitev prizorov. Temelji na ideji sledenja žarka svetlobe po prizoru, izračunavanju njegovega preseka z objekti in odbijanju v drugo smer. Običajno ta algoritem uporabljamo v običajnem evklidskem prostoru, saj predstavlja resnični svet. Vendar pa lahko algoritem implementiramo tudi v drugih (neevklidskih) prostorih, da dobimo zanimive vizualne rezultate. To bo glavna naloga tega projekta.
 
 \section{Cilji}
-Cilji za to projektno nalogo so implementacija "osnovnega" algortima sledenje žarkom v evklidskem prostoru, njegova nadgradnja, da deluje tudi v neevklidskem prostoru na ploščatem torusu in 2-sferi ter primerjava delovanja v evklidskem in neevklidskem prostoru.
+Cilji za to projektno nalogo so implementacija "osnovnega" algoritma sledenje žarkom v evklidskem prostoru, njegova nadgradnja, da deluje tudi v neevklidskem prostoru na ploščatem torusu in 2-sferi ter primerjava delovanja v evklidskem in neevklidskem prostoru.
 
 \section{Sledenje žarkom}
+Predstavljajmo si, da smo na plaži v naši najljubši obalni turistični destinaciji in gledamo, kako bližnja barka pluje v sončni zahod. Nam, na obali, zgleda, da se poleg oddaljevanja tudi "pogreza" v tla. Zakaj pa je temu tako? 
 
-Predstavljajmo si, da smo na plaži v naši najljubši obalni turistični destinaciji in gledamo, kako bližnja barka pluje v sončni zahod. Nam, na obali zgleda, da se poleg oddaljevanja tudi "pogreza" v tla. Zakaj pa je temu tako? \\
+To je ravno zaradi potovanja žarkov. Ker smo v evklidskem prostoru, bo žarek potoval naravnost in nas zaradi ukrivljenosti Zemlje tako, po določeni razdalji, ne bo več dosegel. Sedaj, pa si predstavljajmo, da bi lahko barko kljub oddaljevanju še vedno videli celotno. Ta posebna zmožnost, bi nam bila omogočena v neevklidskem prostoru. In sicer še bolj natančno, v sferičnem neevklidskem prostoru.
 
-To je ravno zaradi potovanja žarkov. Ker smo v evklidskem prostoru, bo žarek potoval naravnost in nas zaradi ukrivljenosti Zemlje tako, po določeni razdalji ne bo več dosegel. Sedaj, pa si predstavljajmo, da bi lahko barko kljub oddaljevanju še vedno videli celotno. Ta posebna zmožnost, bi nam bila omogočena v neevklidskem prostoru. In sicer še bolj natančno, v sferičnem neevklidskem prostoru.\\
-
-\begin{figure}
+\begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\linewidth]{Screenshot 2024-05-25 at 00.37.45.png}
+    \includegraphics[width=0.5\linewidth]{Images/potovanje_zarkov.png}
     \caption{Primerjava [Vir: G. Kovač]}
     \label{Slika:Primerjava}
 \end{figure}
 
 Kaj pa pravzaprav je neevklidski prostor?
-Neevklidski prostor je preprosto prostor, ki ne sledi pravilom evklidske geometrije. Torej prostor ni raven ampak je ukrivljen, vsota kotov v trikotniku je večja ali pa manjša od 180 stopinj... Neevklidski prostor delimo na več različnih geometrij med katerimi so recimo hiperbolična geometrija, eliptična geometrija, sferična geometrija, projektivna geometrija... 
+Neevklidski prostor je preprosto prostor, ki ne sledi pravilom evklidske geometrije. Torej prostor ni raven ampak je ukrivljen, vsota kotov v trikotniku je večja ali pa manjša od 180 stopinj... Neevklidski prostor delimo na več različnih geometrij med katerimi so recimo hiperbolična geometrija, eliptična geometrija, sferična geometrija, projektivna geometrija...
 
-
-
-\section {Implementacija osnovnega algoritma ray tracing}
+\section{Implementacija osnovnega algoritma ray tracing}
 Implementirali smo osnovni algoritem sledenja žarkov v prostoru, kjer so objekti podani z
 \begin{equation}
     f(x,y,z)=0
 \end{equation}
 
-Naš program je sposoben upodobiti preprost prizor z osnovnim senčenjem po naslednjem postopku
+Naš program je sposoben upodobiti preprost prizor z osnovnim senčenjem po naslednjem postopku:
 \newline
 \bigskip
 \begin{enumerate}
-\item V poljubnem prostoru premikamo žarek za nek korak, kjer vsakič preverimo, če se je $f$ v novi točki spremenil predznak
+\item V poljubnem prostoru premikamo žarek za nek korak, kjer vsakič preverimo, če se je $f$ v novi točki spremenil predznak.
 \item Poiščemo natančnejše presečišče tako, da razpolavljamo korak, doker se uspešno ne premaknemo naprej brez spremembe predznaka. Naprej se spet premikamo, doker se ne spremeni predznak. Postopek ponavljamo, doker nismo od objekta oddaljeni za manj kot $\varepsilon$.
 \begin{figure}[H]
     \centering
@@ -72,11 +68,11 @@ Naš program je sposoben upodobiti preprost prizor z osnovnim senčenjem po nasl
 \item[] V našem prostoru so bili objekti dveh tipov. Sfere s središčem v $(x_{0}, y_{0}, z_{0})$ in polmerom $r$, podane v obliki $(x-x_{0})^{2}+(y-y_{0})^{2}+(z-z_{0})^{2}=r^{2}$ in ravnine podane z $ax+by+cz=d$. Razdalja točke do sfere je bila izračunana kot
 \begin{equation} \label{e:distSphere}
     l=\left \| \vec{r}_{t}-\vec{r}_{ci} \right \| - r
-\end{equation},
+\end{equation}
 kjer je $\vec{r}_{t}$ krajevni vektor točke žarka, $\vec{r}_{ci}$ pa krajevni vektor središča sfere, razdalja do ravnine pa kot
 \begin{equation} \label{e:distPlane}
     l=\frac{\left | ax_{t}+by_{t}+cz_{t}-d \right |}{\sqrt{a^{2}+b^{2}+c^{2}}}
-\end{equation},
+\end{equation}
 kjer so $x_{t}, y_{t}, z_{t}$ koordinate točke žarka.
 \item Žarek nato pošljemo od presečišča v smeri proti viru svetlobe, pri tem pa preverjamo presečišča podobno kot pri (1.)
 \end{enumerate}
@@ -88,32 +84,28 @@ $k_{max}= \left \lceil \frac{\left \|\vec{r}_{l}-\vec{r}_{t} \right \|}{h} \righ
 $\vec_{r}_{t}$ pa krajevni vektor točke presečišča.
 
 \section{Sledenje žarkom na ploščatem torusu $\mathbb{T}_{pl}^{3}$} 
-
 \subsection{Kaj je tri dimenzionalni ploščati torus?}
 Tri dimenzionalni ploščati torus \( \mathbb{T}^3_{pl} \), je tridimenzionalna mnogoterost v evklidski geometriji. \( \mathbb{T}^3_{pl} \) dobimo tako, da "zlepimo" nasprotne ploskve enotske kocke \([0,1] \times [0,1] \times [0,1] \subset \mathbb{R}^3 \), kjer je \(\mathbb{R}^3\) tridimenzionalni evklidski prostor. Formalno pravimo, da je \( \mathbb{T}^3_{pl} \) kvocient \(\mathbb{R}^3\) z grupo translacij:
-\begin{equation}
+\[
 (x, y, z) \to (x \pm 1, y, z), \quad (x, y, z) \to (x, y \pm 1, z), \quad (x, y, z) \to (x, y, z \pm 1).
-\end{equation}
+\]
 
 Običajni torusi so ukrivljeni in se jim ukrivljenost po površini spreminja. Ploščati torus pa ima konstantno ukrivljenost v vsaki točki. Poimenovanje ploščat izhaja iz tega, ker je povsod podoben navadni evklidski ravnini. Podobno velja za tridimenzionalni ploščati torus, kjer pri sledenju žarka lahko uporabimo kar osnovno definicijo žarka. Ključna razlika med algoritmom v \( \mathbb{R}^3 \) in \( \mathbb{T}^3_{pl} \) pa je, da bomo tokrat dodali še en korak, ker moramo žarek omejiti na enotsko kocko. Dokler se nahajamo znotraj njenih meja, ne naredimo nobenih popravkov. Ko pa ugotovimo presečišče z eno od ploskev, moramo žarek preslikati na nasprotno ploskev. To lahko storimo tako, da preprosto od žarka odštejemo normalo ploskve, na kateri smo.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\linewidth]{Screenshot 2024-05-26 at 02.02.11.png}
+    \includegraphics[width=0.5\linewidth]{Images/flat_torus_zrcaljenje.png}
     \caption{Žarek v dvodimenzionalnem ploščatem torusu}
     \label{Slika:Žarek v dvodimenzionalnem ploščatem torusu}
 \end{figure}
 
-
-
 \subsection{Razlaga kode}
-
 Ključni vpogled, je da žarek omejimo, kar lahko v programskih jezikih storimo preprosto z operatorjem modulo. Rešitev torej dobimo, ko žarek preslikamo z modulo 1 in tako rezultat omejimo na enotsko kocko.
         
 \begin{align*}
-x &= \left( \text{x} + \text{korak} \cdot \text{smer x }\right) \mod 1 \\
-y &= \left( \text{y} + \text{korak} \cdot \text{smer y }\right) \mod 1 \\
-z &= \left( \text{z} + \text{korak} \cdot \text{smer z }\right) \mod 1
+x &= \left( \text{x} + \text{korak} \cdot \text{smer x} \right) \mod 1 \\
+y &= \left( \text{y} + \text{korak} \cdot \text{smer y} \right) \mod 1 \\
+z &= \left( \text{z} + \text{korak} \cdot \text{smer z} \right) \mod 1
 \end{align*}
 
 % added
@@ -158,15 +150,15 @@ Funkciji \textbf{signs} in \textbf{checkIntersect} implementirata funkcije $f$, 
 \end{algorithm}
 
 % ----
+
 Ko program poženemo, dobimo lep vizualni rezultat.
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\linewidth]{flattours.png}
+    \includegraphics[width=0.5\linewidth]{Images/flat_torus.png}
     \caption{Rezultat "ray tracinga" za tri dimenzionalni ploščati torus}
     \label{Slika:Rezultat "ray tracinga" za tri dimenzionalni ploščati torus}
 \end{figure}
 Na sliki lahko opazimo, da so elementi simetrično preslikani, prav tako pa lahko vidimo, da so tudi različno osenčeni.
-
 
 \section{Sledenje žarkom na dvodimenzionalni sferi $\mathbb{S}^{2}$}
 Žarek na dvodimenzionalni sferi bo potoval po najravnejši poti, tj. geodetki. Geodetka je krivulja po sferi, kjer zahtevamo, da je
@@ -205,14 +197,14 @@ parametrizirana kot
     \end{split}
 \end{equation}
 $u$ lahko dobimo kot
-\begin{equation} \label{e:toU}
-        u=\cos \left( \frac{X}{R} \right)^{-1}
+\begin{equation}
+        u=\cos^{-1} \left( \frac{X}{R} \right)
 \end{equation}
 za $v$ pa uporabimo prvi dve enačbi
-\begin{equation} \label{e:toV}
+\begin{equation} \label{e:toU}
     \begin{split}
         &\frac{R\sin(u)Y}{R\sin(u)X}=\frac{\sin(v)}{\cos(v)} \\
-        &v=\tan \left(\frac{Y}{X} \right)^{-1}
+        &v=\tan^{-1} \left(\frac{Y}{X} \right)
     \end{split}
 \end{equation}
 
@@ -225,19 +217,20 @@ vsak žarek izračunali središče sfere z najnižjo $z$ koordinato in polmerom 
 \centering
 \begin{minipage}{.5\textwidth}
   \centering
-  \includegraphics[width=0.8\linewidth]{rays_top.png}
+  \includegraphics[width=0.8\linewidth]{Images/rays_top.png}
   \captionof{figure}{Potovanje žarkov od zgoraj}
   \label{fig:test1}
 \end{minipage}%
 \begin{minipage}{.5\textwidth}
   \centering
-  \includegraphics[height=0.77\linewidth]{rays_side.png}
+  \includegraphics[height=0.77\linewidth]{Images/rays_side.png}
   \captionof{figure}{Potovanje žarkov s strani}
   \label{fig:test2}
 \end{minipage}
 \end{figure}
 
 Središča sfer žarkov se bodo torej nahajala na sferi s polmerom $R$ in središem v kameri $T_{0}$. Za različne smeri žarkov $\vec{v}_{i}$ je bilo središče $C_{i}$ izračunano po sledečem postopku
+
 \bigskip
 \newline
 Izračunamo vektorski produkt med navpičnim vektorjem in smerjo $\vec{v}_{i}$. Dobljeni vektor je normala na ravnino krožnice z iskanim središčem, ki gre skozi $T_{0}$
@@ -267,7 +260,6 @@ Izračunamo skalarni produkt
 Če se premikamo v pravi smeri, bo $a > 0$, drugače moramo za začetno smer izbrati negativni predznak.
 \bigskip
 \newline
-
 V nadaljevanju se premikamo po geodetki z eno izmed aproksimacijskih metod. V splošnem lahko za take sisteme uporabimo Eulerjevo metodo
 \begin{equation} \label{e:euler}
     \begin{split}
@@ -305,13 +297,13 @@ razdelku %TODO: link razdelek
       \Comment{žarku poiščemo središče sfere}
       \State $T_{m}$ $\gets$ $T_{0} - \hbox{center}$
       \Comment{sfero premaknemo v $(0, 0)$}
-      \State $\vec{y}_{n}$ $\gets$ \textbf{initializeSphere}($T_{0}$, R) %TODO: tukaj cekiramo tudi smer!
+      \State $\vec{y}_{n}$ $\gets$ \textbf{initializeSphere}($T_{0}$, R)
       \Comment{pripravimo začetni $\vec{y}$}
     \EndIf
     \\
-    \State $\vec{y}_{n+1}, \hbox{step}$ $\gets$ \textbf{DOPRI5}($\vec{y}_{n}$, step) %TODO: tukaj uporabili neko adaptivno metodo, kjer lahko sproti spremljamo step, da lahko potem uporabimo za exactIntersect
+    \State $\vec{y}_{n+1}, \hbox{step}$ $\gets$ \textbf{DOPRI5}($\vec{y}_{n}$, step)
     \Comment{korak po geodetki}
-    \State $T_{n+1}$ $\gets$ \textbf{uvToVec}($\vec{y}_{n+1}$, R) + center %vzame y1 in y3 in jih pretvori v x y z
+    \State $T_{n+1}$ $\gets$ \textbf{uvToVec}($\vec{y}_{n+1}$, R) + center
     \\
     \State object $\gets$ \textbf{checkIntersects}($T_{n+1}$, objects, signs)
     \\
@@ -331,7 +323,7 @@ razdelku %TODO: link razdelek
 \end{algorithmic}
 \end{algorithm}
 
-\begin{algorithm}
+\begin{algorithm}[H]
     \caption{Iskanje natančnejšega presečišča}
 \begin{algorithmic}
     \Function{findIntersection}{$T_{0}$, object, signs, $\vec{y}_{n}$, step, R, center, $\varepsilon$}
@@ -365,38 +357,38 @@ razdelku %TODO: link razdelek
 
 \section {Primerjava metode sledenje žarku v evklidskem in neevklidskem prostoru}
 
-SLIKA ZA PRIMERJAVO / ANIMACIJE WHATEVER
 
+\begin{itemize}
+\item sledi pravilom evklidske geometrije
+\item prostor je raven (žarki potujejo naravnost)
+\item koti v trikotniku so skupaj 180 stopinj
+\item nam najbolj poznan
+\end{itemize}
 
-sledi pravilom evklidske geometrije
-prostor je raven (žarki potujejo naravnost)
-koti v trikotniku so skupaj 180 stopinj
-nam najbolj poznan
-
-ne sledi pravilom evklidske geometrije
-prostor je ukrivljen (žarki ni nujno, da potujejo naravnost)
-koti v trikotniku skupaj več / manj od  180 stopinj
-
+\begin{itemize}
+\item ne sledi pravilom evklidske geometrije
+\item prostor je ukrivljen (žarki ni nujno, da potujejo naravnost)
+\item koti v trikotniku skupaj več / manj od  180 stopinj
+\end{itemize}
 
 \section{Razdelitev dela}
 \begin{itemize}
   \item Blaž Bergant: DOPIŠI SAM
-  \item Martin Jereb: ogrodje poročila, implementacija razreda Torus, priprava PowerPoint predstavitve
-  \item Matjaž Pogačnik: Implementacija in izpeljava algoritmov za 2Sphere.
+  \item Martin Jereb: ogrodje poročila, razlaga podnaloge za Torus, priprava PowerPoint predstavitve
+\item Matjaž Pogačnik: Implementacija in izpeljava algoritmov za 2Sphere.
 \end{itemize}
-
 
 \section{Viri}
 \begin{itemize}
-  \item Kovač, G. (2023). \textit{Sledenje žarku v neevklidskih
-prostorih} (Diplomska naloga). Ljubljana: [G. Kovač].
+  \item Kovač, G. (2023). \textit{Sledenje žarku v neevklidskih prostorih} (Diplomska naloga). Ljubljana: [G. Kovač].
   \item Kovač, G. (2024). \textit{Ray tracing in Non-euclidean spaces}. Ljubljana: [G. Kovač].
   \item Zalar, A. \textit{Mathematical Modelling, Lecture Notes} (2024). Ljubljana: [A. Zalar].
-    \item \textit{Non-Euclidean geometry}. (2024). Pridobljeno 24.5.2024 s spletne strani \url{https://en.wikipedia.org/wiki/Non-Euclidean_geometry.}
+  \item \textit{Non-Euclidean geometry}. (2024). Pridobljeno 24.5.2024 s spletne strani: \url{https://en.wikipedia.org/wiki/Non-Euclidean_geometry.}
 \end{itemize}
 
 \section{Priloga}
-TUKI PRIDE KODA AL PA SLIKE AL KARKOL K NE BO PASAL V POROČILO
-
+\begin{itemize}
+  \item Koda je na voljo na spletnem repozitoriju, na \href{https://github.com/MAZI2/Ray-tracing-non-euclidean-spaces}{povezavi}.
+  \item Spletna predstavitev pa je na voljo \href{https://docs.google.com/presentation/d/1NP8gkPzV8rE2ToBoUAP4b7w2yMkAWgCmlsRPMn_5Ahc/edit?usp=sharing}{tukaj}.
+\end{itemize}
 \end{document}
-
