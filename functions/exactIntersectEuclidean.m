@@ -1,5 +1,5 @@
-function [intersect, o] = exactIntersectTorus(T, d)
-% Ray trace for Flat 3D torus
+function [intersect, o] = exactIntersectEuclidean(T, d)
+% Ray trace for Euclidean space
 % step
 h = 0.13;
 % tolerance for exact intersect
@@ -67,8 +67,6 @@ while true
    
     % get next point (perform step)
     Tnt = Tn + h.*d;
-    % map to set boundaries [-7, 7]
-    Tnt = mapToCube(Tnt, -7, 7);
 
     % check signs
     % h = h/2 if changed
