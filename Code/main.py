@@ -1,9 +1,23 @@
-# Tukej definiraš sceno, main pol požene renderjanje itd.
-# Imports:
-from ui import _UIThread
-from working import Working
-from utilities import suppress_stdout
+# SETUP OD STUFF
+import logging
+from utilities import suppress_stdout, Logger
+Logger.configure("Logs/raytracer.log", logging.DEBUG, False, True)
 
+from objects import Sphere, Plane, Light, Camera
+from spaces import Euclidean, FlatTorus, TwoSphere
+from scene import Scene
+Scene.configure({"sphere": Sphere((3, 0, 0), 1, (255, 0, 255)), 
+                 "sphere1": Sphere((1.8, 0.8, 1), 0.2, (0, 255, 255)), 
+                 "plane": Plane((0, -2, 0), (0, 1, 0), (255, 100, 0)),
+                 "light": Light((0, 3, 3), ), 
+                 "camera": Camera((0, 0, 0), (0, 0, 0), (320, 240), 180), # 127 za 90 stopinj levo desno fov
+                 "twosphere": TwoSphere(40)})
+
+from ui import _UIThread
+_UIThread.configure(2)
+
+# IMPORTS
+from working import Working
 # Suppress pygame initialization message
 with suppress_stdout():
     import pygame
@@ -28,22 +42,13 @@ with suppress_stdout():
 # ------------------ Main ------------------
 
 def main():
-
-    # DEBUG
-    # ui_thread = _UIThread()
-    # image = np.ndarray((800, 600, 3), dtype=np.uint8)
-    # image[:, :, 0] = 255
-    # ui_thread.set_image(image)
-    # ui_thread.ui_loop()
-    # END DEBUG
-
     working = Working()
     ui_thread = _UIThread()
 
-    # Start terminal thread# ddf
+    # Start terminal thread 
     working.start_thread()
 
-    # Main loop
+    # Main loop ish (main thread je za UI)
     ui_thread.ui_loop()
 
     # Clean up

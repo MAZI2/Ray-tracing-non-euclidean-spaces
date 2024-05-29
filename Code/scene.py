@@ -5,16 +5,19 @@ import time
 
 import typehints as th
 from spaces import _Space, Euclidean, SpacesRegistry
-from objects import _SceneObject, _ObjectTypes, ObjectsRegistry
+from objects import _SceneObject, _ObjectTypes, ObjectsRegistry, Camera
+from utilities import Logger
 
-import logging
-logger = logging.getLogger(__name__)
 
 class Scene:
+
+    scene_contents: Dict[str, Type[_SceneObject]] # TODO Morm nrdit calculated contents dict k vrne vse objekte, sicer morjo bit posebi self.scene, self. ...
+
+    @classmethod
+    def configure(cls, scene_contents: Dict[str, Type[_SceneObject]] = None):
+        cls.scene_contents = scene_contents if scene_contents else dict()
     
-    def __init__(self, scene_contents: Dict[str, Type[_SceneObject]] = None):
-        self.scene_contents = scene_contents if scene_contents else dict()
-        self.signs = list()
+    def __init__(self):
         self.help_dict = {"move": "Move object. Usage: move <name> [dx=<dx>] [dy=<dy>] [dz=<dz>] [x=<x>] [y=<y>] [z=<z>]",
                           "rotate": "Rotate object. Usage: rotate <name> [du=<du>] [dv=<dv>] [dw=<dw>] [u=<u>] [v=<v>] [w=<w>]",
                           "list": "List all objects in the scene.",
@@ -24,6 +27,7 @@ class Scene:
                           "set_space": "Set the space of the scene. Usage: set_space <space>\n" + "\n".join([f"    {key}: {help_string}" for key, (_, help_string) in SpacesRegistry.get_all().items()]),
                           "help": "Get help for a command. Usage: help [<command>]"}
 
+        self.logger = Logger.setup_logger("Scene")
     # Get scene_contents by type
     @property
     def space(self):
@@ -49,11 +53,14 @@ class Scene:
         return [obj for obj in self.scene_contents.values() if _ObjectTypes.light == obj.type]
     
     @property
-    def cameras(self):
+    def cameras(self) -> List[Camera]:
         # For now all the objects just use the first camera...
         return [obj for obj in self.scene_contents.values() if _ObjectTypes.camera == obj.type]
     
-    # Controlling the scene
+    def get_scene_content(self, name: str) -> _SceneObject:
+        return self.scene_contents.get(name, None)
+    
+    # Controlling the scene TODO: Logiko za input checking v working
     def move(self, *args, **kwargs):
         obj = self._get_object("move", *args, **kwargs)
         if not obj:
@@ -171,7 +178,7 @@ class Scene:
             help("add")
             return
         elif name_in_kwargs and len(args) < 2:
-            logger.warning("Type not provided, using name as type.")
+            self.logger.warning(f"Type not provided in {args}, using name as type: {args[0]}")
             type: str = args[0]
         else: 
             type: str = args[1]
@@ -225,7 +232,7 @@ class Scene:
             for name, obj in self.scene_contents.items():
                 print(f"{name:<10} {obj}")
 
-    def help(self, *args, **kwargs):
+    def help(self, *args, **kwargs): # TODO Help bi mogu __doc__ prebrat iz maina za vse commande...
         if len(args) > 0:
             command = args[0]
 
@@ -248,7 +255,20 @@ class Scene:
         if _ObjectTypes.space not in [obj.type for obj in self.scene_contents.values()]:
             print("No space in the scene.")
             return False
-        return True
+        return True    
+
+    def set_resolution(self, *args, **kwargs):
+        if len(args) < 2:
+            print("Resolution not provided.")
+            help("set_resolution")
+            return
+        
+        if "resolution" in kwargs:
+            res_x, res_y = kwargs["resolution"]
+        else:
+            res_x, res_y = args[0], args[1]
+        
+        self.cameras[0].resolution = (int(res_x), int(res_y))
     
     # Helper functions
     def _get_object(self, help_for: str, *args, **kwargs) -> _SceneObject:

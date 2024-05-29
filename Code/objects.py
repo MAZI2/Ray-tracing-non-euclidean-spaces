@@ -3,7 +3,7 @@
 import typehints as th
 import numpy as np
 
-from utilities import vector_uvw, Ray
+from utilities import vector_uvw, Ray, Logger
 from typehints import _ObjectTypes
 
 
@@ -23,6 +23,8 @@ class _SceneObject:
         self.u, self.v, self.w = orientation
         # Name
         self.name = "sceneobject"
+
+        self.logger = Logger.setup_logger("_SceneObject")
     
     def move(self, x: float = 0, y: float = 0, z: float = 0, 
              dx: float = 0, dy: float = 0, dz: float = 0):
@@ -63,7 +65,7 @@ class _SceneObject:
     def orientation(self, orientation: np.ndarray):
         self.u, self.v, self.w = orientation
 
-class ObjectsRegistry:
+class ObjectsRegistry: #TODO Vsak objekt svoj __doc__ in ne kle notr
     """Register for all objects that exist"""
     _objects = dict()
 
@@ -140,7 +142,7 @@ class Sphere(_IntersectableObject):
     
     # For spaces:
     def euclidean(self, ray: Ray) -> float:
-        cur_position = ray.origin + ray.direction * 0.001 # Move the position a bit forward ker mam nek weird bug
+        cur_position = ray.origin + ray.direction * 0.01 # Move the position a bit forward ker mam nek weird bug
         L = np.subtract(cur_position, self.position) # Točka premice - središče krogle
 
         # a, b, c iz enačbe za ničle kvadratne funkcije:
@@ -174,8 +176,10 @@ class Plane(_IntersectableObject):
                  normal: np.ndarray = np.array([0, 1, 0]),
                  rgb: np.ndarray = np.array([255, 255, 255]),
                  visible: bool = True):
-        super().__init__(position, (0, 0, 0), rgb, visible)
-        self.normal = normal
+        u, v = vector_uvw.vector_to_degrees(normal)
+        super().__init__(position, (u, v, 0), rgb, visible)
+        # u, v, w are set in normal setter
+        self.normal = normal 
 
         self.d = np.dot(self.normal, self.position)
 
@@ -190,7 +194,8 @@ class Plane(_IntersectableObject):
     @normal.setter
     def normal(self, normal: np.ndarray):
         self.a, self.b, self.c = normal
-        self.u, self.v, self.w = vector_uvw.vector_to_degrees(normal)
+        self.u, self.v = vector_uvw.vector_to_degrees(normal)
+        self.w = 0 # Plane has no roll
 
     @property
     def orientation(self) -> np.ndarray:
@@ -198,7 +203,8 @@ class Plane(_IntersectableObject):
     
     @orientation.setter
     def orientation(self, orientation: np.ndarray):
-        self.normal = vector_uvw.degrees_to_vector(orientation) # Normal setter sets uvw
+        self.normal = vector_uvw.degrees_to_vector(orientation) 
+        # u v w are set in normal setter
         self.d = np.dot(self.normal, self.position)
     
     # Scene called functions
@@ -220,7 +226,7 @@ class Plane(_IntersectableObject):
     
     # For spaces:
     def euclidean(self, ray: Ray) -> float:
-        cur_position = ray.origin + ray.direction * 0.001 # Move the position a bit forward ker mam nek weird bug
+        cur_position = ray.origin + ray.direction * 0.01 # Move the position a bit forward ker mam nek weird bug
 
         stevec = np.dot(self.normal, np.subtract(self.position, cur_position))
         imenovalec = np.dot(self.normal, ray.direction)
@@ -262,14 +268,16 @@ ObjectsRegistry.register("light", Light,
 class Camera(_SceneObject):
     def __init__(self, position: np.ndarray, 
                  orientation: np.ndarray, 
+                 resolution: th.resolution = (320, 240),
                  fov: float = 127):
         super().__init__(position, orientation, True)
         self.fov = fov # Diagonaln Field of view (v stopinjah)
+        self.resolution = resolution
 
         self.type = _ObjectTypes.camera
         self.name = "camera"
     
     def __str__(self) -> str:
-        return f"{super().__str__()} fov: {self.fov}"
+        return f"{super().__str__()} fov: {self.fov}, resolution: {self.resolution}"
 ObjectsRegistry.register("camera", Camera, 
-                                "Use: Camera position=<(x, y, z)> orientation=<(u, v, w)> [fov=<fov>]")
+                         "Use: Camera position=<(x, y, z)> orientation=<(u, v, w)> [resolution=<(x, y)>] [fov=<fov>]")

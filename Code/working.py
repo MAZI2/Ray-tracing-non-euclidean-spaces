@@ -8,11 +8,7 @@ import typehints as th
 from ui import UI
 from scene import Scene
 from render import Renderer
-from spaces import Euclidean, FlatTorus, TwoSphere
-from objects import Plane, Light, Camera, Sphere
-from utilities import setup_logger
-
-logger = setup_logger(__name__)
+from utilities import Logger
 
 class _WorkingEvents:
     quit = "quit"
@@ -40,16 +36,14 @@ class _WorkingThread(threading.Thread):
         super().__init__()
         self.daemon = True # Kill thread when main thread dies
         self.name = "WorkingThread" # Name the thread
-        
-        self.scene = Scene({"sphere1": Sphere((3, 0, 0), 1, (255, 0, 255)), 
-                            "sphere2": Sphere((1.8, 0.8, 1), 0.2, (0, 255, 255)), 
-                            # "plane": Plane((0, -2, 0), (0, 1, 0), (255, 100, 0)),
-                            "light": Light((0, 3, 3), ), 
-                            "camera": Camera((0, 0, 0), (0, 0, 0), 50),
-                            "euclidean": Euclidean()})
+
+        self.scene = Scene()
         self.renderer = Renderer()
 
         self.running = True
+
+        self.logger = Logger.setup_logger("WorkingThread")
+        self.logger.info("Working thread started.")
 
     def run(self):
         commands = {
@@ -64,6 +58,9 @@ class _WorkingThread(threading.Thread):
             "render_sync": self.render_sync,
             "set_space": self.scene.set_space,
             "help": self.scene.help,
+            "plot": self.plot,
+            "set_scale": UI.set_scale,
+            "set_resolution": self.scene.set_resolution,
         }
 
         while self.running:
@@ -78,6 +75,7 @@ class _WorkingThread(threading.Thread):
             command = tokens[0]
             if len(tokens) > 1:
                 args, kwargs = self._parse_kwargs(tokens[1:])
+                self.logger.debug(f"Command: {command}, args: {args}, kwargs: {kwargs}")
             else:
                 args = []
                 kwargs = {}
@@ -88,6 +86,7 @@ class _WorkingThread(threading.Thread):
                 except TypeError as e:
                     print(f"Error: {e}")
                     print(f"Usage for '{command}': {commands[command].__doc__}")
+                    self.logger.error(f"Error: {e}")
             else:
                 # Provide suggestions for close matches
                 suggestions = difflib.get_close_matches(command, commands.keys())
@@ -98,6 +97,7 @@ class _WorkingThread(threading.Thread):
 
 
             if self.check_queue():
+                self.logger.info("Quitting thread.")
                 return
 
     
@@ -122,6 +122,17 @@ class _WorkingThread(threading.Thread):
         if self.scene.render_check():
             kwargs["scene"] = self.scene
             self.renderer.render_sync(**kwargs)
+
+    def plot(self, *args, **kwargs):
+        if self.scene.render_check():
+            kwargs["scene"] = self.scene
+            if kwargs.get("name") is None and args:
+                kwargs["name"] = args[0]
+            else:
+                print("No name provided.")
+                return
+            self.renderer.plot(**kwargs)
+        
     
     # Helper methods
 
