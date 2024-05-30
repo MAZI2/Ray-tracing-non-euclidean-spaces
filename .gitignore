@@ -4,3 +4,11 @@ env/
 Code/test.py
 Code/Logs/
 /Logs/
+porocilo.aux
+porocilo.log
+sporocilo.fls
+porocilo.fdb_latexmk
+porocilo.pdf
+porocilo.out
+porocilo.synctex.gz
+porocilo.toc
