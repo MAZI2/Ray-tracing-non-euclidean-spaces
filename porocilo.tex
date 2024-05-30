@@ -47,62 +47,63 @@ To je ravno zaradi potovanja žarkov. Ker smo v evklidskem prostoru, bo žarek p
 Kaj pa pravzaprav je neevklidski prostor?
 Neevklidski prostor je preprosto prostor, ki ne sledi pravilom evklidske geometrije. Torej prostor ni raven ampak je ukrivljen, vsota kotov v trikotniku je večja ali pa manjša od 180 stopinj... Neevklidski prostor delimo na več različnih geometrij med katerimi so recimo hiperbolična geometrija, eliptična geometrija, sferična geometrija, projektivna geometrija...
 
-
 \section{Implementacija osnovnega algoritma ray tracing}
 \subsection{Objekti v sceni}
 Posamični objekti v prostoru so podani z enačbo v obliki:
-$$o(x,y,z): \mathbb{R}^3 \to R =0$$
+\[ o(x,y,z): \mathbb{R}^3 \to R =0 \]
 Za kroglo je to enačba: 
-$$(\vec{P} - \vec{C})^2 - r^2 = 0$$ 
-kjer je $\vec{P}$ točka na krogli, $\vec{C}$ središče krogle in $r$ polmer krogle. \newline
+\[ (\vec{P} - \vec{C})^2 - r^2 = 0 \]
+kjer je \(\vec{P}\) točka na krogli, \(\vec{C}\) središče krogle in \(r\) polmer krogle. \newline
 Za ravnino pa enačba 
-$$\vec{n} \cdot \vec{P} - \vec{n} \cdot \vec{C} = 0$$
-kjer je $\vec{n}$ normala ravnine, $\vec{P}$ pa  koeficienti normale ravnine, $d$ pa konstanta.
+\[ \vec{n} \cdot \vec{P} - \vec{n} \cdot \vec{C} = 0 \]
+kjer je \(\vec{n}\) normala ravnine, \(\vec{P}\) pa koeficienti normale ravnine, \(d\) pa konstanta.
 
 \subsection{Prostori}
 Vsak prostor implementira funkcijo, v obliki
-$$s(t): \mathbb{R} \to \mathbb{R}^3 = [x, y, z]^T$$
-ki zna žarek podan z točko $\vec{T}$ in smerjo $\vec{v}$ premakniti za $t$ korakov v smeri $\vec{v}$.
-V primeru evklidskega prostora je to preprosto premikanje za $t$ korakov v smeri $\vec{v}$, 
-$$\vec{T}_{n+1} = \vec{T}_{n} + t \cdot \vec{v}$$
+\[ s(t): \mathbb{R} \to \mathbb{R}^3 = [x, y, z]^T \]
+ki zna žarek podan z točko \(\vec{T}\) in smerjo \(\vec{v}\) premakniti za \(t\) korakov v smeri \(\vec{v}\).
+V primeru evklidskega prostora je to preprosto premikanje za \(t\) korakov v smeri \(\vec{v}\), 
+\[ \vec{T}_{n+1} = \vec{T}_{n} + t \cdot \vec{v} \]
 Prostora flat torus in 2-sphere sta podrobneje opisana kasneje.
 
 \subsection{Algoritem}
-Želeli smo si splošen način, kako lahko premikamo žarek skozi katerikoli prostor. Tako smo zasnovali algoritem, ki temelji na iskanju ničle funkcije vsakega posameznega objekta $o = (x, y, z)$, ko v njo vstavimo
-pozicijo žarka ob podanem "času" $t$. Algoritem torej išče parameter $t$ za katerega velja:
-$$f = o(s(t)) = 0$$
+Želeli smo si splošen način, kako lahko premikamo žarek skozi katerikoli prostor. Tako smo zasnovali algoritem, ki temelji na iskanju ničle funkcije vsakega posameznega objekta \( o = (x, y, z) \), ko v njo vstavimo pozicijo žarka ob podanem "času" \( t \). Algoritem torej išče parameter \( t \) za katerega velja:
+\[ f = o(s(t)) = 0 \]
 
 \bigskip
 \begin{enumerate}
-\item Začnemo v točki $T_{0}$ - pozicija kamere, iz koder pošiljamo žarke v smeri, določene z Field of view (FOV) kamere, ter resolucijo slike. 
-\item Žarek v vsakem koraku premaknemo za $h$ v smeri $\vec{v}$.
-\item V poljubnem prostoru premikamo žarek za nek korak, kjer vsakič preverimo vrednost funkcije $f$, ki jo vrne vsak objekt.
-\item Če se v neki točki funkciji predznak, vemo da smo v tem koraku vstopili v objekt. Razpolovimo korak in ga ponovimo.
-\item Če je v neki točki aproksimacija odvoda $f$ pozitivna, vemo da se od objekta oddaljujemo. Mogoče smo ga z korakom preskočili, ali pa smo odšli mimo. Razpolovimo korak in ga ponovimo.
-\item Postopek razpolavljanja ponavljamo, kdokler korak ni manjši kot $\varepsilon$.
+
+\item Začnemo v točki \( T_{0} \) - pozicija kamere, iz koder pošiljamo žarke v smeri, določene z Field of view (FOV) kamere, ter resolucijo slike. 
+\item Žarek v vsakem koraku premaknemo za \( h \) v smeri \(\vec{v}\).
+\item V poljubnem prostoru premikamo žarek za nek korak, kjer vsakič preverimo vrednost funkcije \( f \), ki jo vrne vsak objekt.
+\item Če se v neki točki funkciji predznak spremeni, vemo da smo v tem koraku vstopili v objekt. Razpolovimo korak in ga ponovimo.
+\item Če je v neki točki aproksimacija odvoda \( f \) pozitivna, vemo da se od objekta oddaljujemo. Mogoče smo ga z korakom preskočili, ali pa smo odšli mimo. Razpolovimo korak in ga ponovimo.
+\item Postopek razpolavljanja ponavljamo, dokler korak ni manjši kot \( \varepsilon \).
+
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.5\linewidth]{intersect.png}
     \caption{Iskanje natančnejšega presečišča}
     \label{Slika:Iskanje natančnejšega presečišča}
 \end{figure}
-\item Žarek od točke presečišča pošljemo v smer luči. Če žarek pride do luči brez da bi se prej sekal z objektom, je točka osvetljena.
-\item Glede na barvo objekta in ugotovljeno osvetlenost pobarvamo točko na sliki ki pripada žarku.
+
+\item Žarek od točke presečišča pošljemo v smer luči. Če žarek pride do luči, brez da bi se prej sekal z objektom, je točka osvetljena.
+\item Glede na barvo objekta in ugotovljeno osvetlenost pobarvamo točko na sliki, ki pripada žarku.
 \end{enumerate}
 
 \bigskip
-V nadaljevanju smo implementirali algoritem za sledenje žarku na tridimenzionalnem ploščatem torusu $\mathbb{T}_{pl}^{3}$ in dvodimenzionalni sferi $\mathbb{S}^2$ v $\mathbb{R}^3$. Algoritem za sledenje žarku v evklidskem prostoru je enak algoritmu za torus, brez preslikave žarka na željeno domeno. Sledenje v smeri vira svetlobe uporablja algoritem za sledenje žarku v evklidskem prostoru, pri tem pa ga pri korakih dolžine $h$ omejimo na maksimalno število korakov
-%$k_{max}= \left \lceil \frac{\left \|\vec{r}_{l}-\vec{r}_{t} \right \|}{h} \right \rceil$, kjer je $\vec_{r}_{l}$ krajevni vektor vira svetlobe,
-%$\vec_{r}_{t}$ pa krajevni vektor točke presečišča. TODO error metal kle
+V nadaljevanju smo implementirali algoritem za sledenje žarku na tridimenzionalnem ploščatem torusu \( \mathbb{T}_{pl}^{3} \) in dvodimenzionalni sferi \( \mathbb{S}^2 \) v \( \mathbb{R}^3 \). Algoritem za sledenje žarku v evklidskem prostoru je enak algoritmu za torus, brez preslikave žarka na željeno domeno. Sledenje v smeri vira svetlobe uporablja algoritem za sledenje žarku v evklidskem prostoru, pri tem pa ga pri korakih dolžine \( h \) omejimo na maksimalno število korakov
+\[ k_{max}= \left \lceil \frac{\left \|\vec{r}_{l}-\vec{r}_{t} \right \|}{h} \right \rceil \]
+kjer je \( \vec{r}_{l} \) krajevni vektor vira svetlobe, \( \vec{r}_{t} \) pa krajevni vektor točke presečišča.
 
-\section{Sledenje žarkom na ploščatem torusu $\mathbb{T}_{pl}^{3}$} 
+\section{Sledenje žarkom na ploščatem torusu \(\mathbb{T}_{pl}^{3}\)} 
 \subsection{Kaj je tri dimenzionalni ploščati torus?}
 Tri dimenzionalni ploščati torus \( \mathbb{T}^3_{pl} \), je tridimenzionalna mnogoterost v evklidski geometriji. \( \mathbb{T}^3_{pl} \) dobimo tako, da "zlepimo" nasprotne ploskve enotske kocke \([0,1] \times [0,1] \times [0,1] \subset \mathbb{R}^3 \), kjer je \(\mathbb{R}^3\) tridimenzionalni evklidski prostor. Formalno pravimo, da je \( \mathbb{T}^3_{pl} \) kvocient \(\mathbb{R}^3\) z grupo translacij:
 \[
 (x, y, z) \to (x \pm 1, y, z), \quad (x, y, z) \to (x, y \pm 1, z), \quad (x, y, z) \to (x, y, z \pm 1).
 \]
 
-Običajni torusi so ukrivljeni in se jim ukrivljenost po površini spreminja. Ploščati torus pa ima konstantno ukrivljenost v vsaki točki. Poimenovanje ploščat izhaja iz tega, ker je povsod podoben navadni evklidski ravnini. Podobno velja za tridimenzionalni ploščati torus, kjer pri sledenju žarka lahko uporabimo kar osnovno definicijo žarka. Ključna razlika med algoritmom v \( \mathbb{R}^3 \) in \( \mathbb{T}^3_{pl} \) pa je, da bomo tokrat dodali še en korak, ker moramo žarek omejiti na enotsko kocko. Dokler se nahajamo znotraj njenih meja, ne naredimo nobenih popravkov. Ko pa ugotovimo presečišče z eno od ploskev, moramo žarek preslikati na nasprotno ploskev. To lahko storimo tako, da preprosto od žarka odštejemo normalo ploskve, na kateri smo.
+Običajni torusi so ukrivljeni in se jim ukrivljenost po površini spreminja. Ploščati torus pa ima konstantno ukrivljenost v vsaki točki. Poimenovanje ploščat izhaja iz tega, ker je povsod podoben navadni evklidski ravnini. Podobno velja za tridimenzionalni ploščati torus, kjer pri sledenju žarka lahko uporabimo kar osnovno definicijo žarka. Ključna razlika med algoritmom v \( \mathbb{R}^3 \) in \( \mathbb{T}^3_{pl} \) pa je, da bomo tokrat dodali še en korak, ker moramo žarek omejiti na kocko. Dokler se nahajamo znotraj njenih meja, ne naredimo nobenih popravkov. Ko pa ugotovimo presečišče z eno od ploskev, moramo žarek preslikati na nasprotno ploskev. To lahko storimo tako, da preprosto žarek omejimo znotraj domene, izračunamo presežek in ga prištejemo začetku domene.
 
 \begin{figure}[H]
     \centering
@@ -112,20 +113,23 @@ Običajni torusi so ukrivljeni in se jim ukrivljenost po površini spreminja. Pl
 \end{figure}
 
 \subsection{Razlaga kode}
-Ključni vpogled, je da žarek omejimo, kar lahko v programskih jezikih storimo preprosto z operatorjem modulo. Rešitev torej dobimo, ko žarek preslikamo z modulo 1 in tako rezultat omejimo na enotsko kocko.
-        
-\begin{align*}
-x &= \left( \text{x} + \text{korak} \cdot \text{smer x} \right) \mod 1 \\
-y &= \left( \text{y} + \text{korak} \cdot \text{smer y} \right) \mod 1 \\ %TODO Kle a b c?
-z &= \left( \text{z} + \text{korak} \cdot \text{smer z} \right) \mod 1
-\end{align*}
+Ključni vpogled, je da žarek omejimo na domeno. V spodnji funkciji mapToCube je Tn začetni vektor, a je začetek domene, b konec domene.
+\begin{algorithm}[H]
+\caption{Map to Cube}\label{alg:mapToCube}
+\begin{algorithmic}[1]
+\Function{mapToCube}{$Tn$, $a$, $b$} 
+    \State $range \gets b - a$
+    \State $q \gets (Tn - a) / range$
+    \State $fr \gets q - \text{floor}(q)$
+    \State $Tnt \gets a + fr \cdot range$
+    \State \Return $Tnt$
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
 
-% added
-%TODO: formule za mapiranje žarka na zeljeno domeno
-
-Funkciji \textbf{signs} in \textbf{checkIntersect} implementirata funkcije $f$, \textbf{distance} pa implementira formuli \eqref{e:distSphere} in %TODO A tukej smo zdj opisval funkcije iz mathlaba al iz pythona? Ker v pythonu nimam teh funkcij zares vec..
-\eqref{e:distPlane}. Funkcija \textbf{remap} implementira formule %TODO: link enacbe
-\begin{algorithm}
+Funkciji \textbf{signs} in \textbf{checkIntersect} implementirata funkcije \( f \), \textbf{distance} pa implementira formuli (6) in 
+(7). Funkcija \textbf{remap} implementira funkcijo mapToCube.
+\begin{algorithm}[H]
     \caption{Sledenje žarku na ploščatem torusu}
 \begin{algorithmic}
     \Function{traceRayFlatTorus}{$T_{0}$, $\vec{v}$, step, maxIt, objects, a, b, $\varepsilon$}
@@ -161,20 +165,18 @@ Funkciji \textbf{signs} in \textbf{checkIntersect} implementirata funkcije $f$, 
 \end{algorithmic}
 \end{algorithm}
 
-% ----
-
 Ko program poženemo, dobimo lep vizualni rezultat.
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\linewidth]{Images/flat_torus.png} %TODO A damo uno sliko kle k je več repetitionov?
+    \includegraphics[width=0.5\linewidth]{Images/flat_torus.png}
     \caption{Rezultat "ray tracinga" za tri dimenzionalni ploščati torus}
     \label{Slika:Rezultat "ray tracinga" za tri dimenzionalni ploščati torus}
 \end{figure}
 Na sliki lahko opazimo, da so elementi simetrično preslikani, prav tako pa lahko vidimo, da so tudi različno osenčeni.
 
-\section{Sledenje žarkom na dvodimenzionalni sferi $\mathbb{S}^{2}$}
+\section{Sledenje žarkom na dvodimenzionalni sferi \(\mathbb{S}^{2}\)}
 Žarek na dvodimenzionalni sferi bo potoval po najravnejši poti, tj. geodetki. Geodetka je krivulja po sferi, kjer zahtevamo, da je
-pospešek v smeri normale tangentne ravnine 0. Majhen korak po geodetki je v $uv$ ravnini opisan s sistemom dveh diferencialnih enačb drugega reda.
+pospešek v smeri normale tangentne ravnine 0. Majhen korak po geodetki je v \( uv \) ravnini opisan s sistemom dveh diferencialnih enačb drugega reda.
 \begin{equation}
     \begin{split}
         &\frac{d^{2}u}{dt^{2}}-\cos(u)\sin(u)\frac{dv}{dt}\frac{dv}{dt}=0 \\
@@ -199,7 +201,7 @@ Dobimo sistem 4 DE prvega reda
     &\frac{dy_{4}}{dt}=-2\cot(y_{1})y_{2}y_{4}
 \end{split}
 \end{equation}
-Ker se bomo premikali po $uv$ ravnini, moramo koordinate v kartezičnem koordinatnem sistemu transformirati v parametra $u$ in $v$. Sfera v $\mathbb{R}^3$ je
+Ker se bomo premikali po \( uv \) ravnini, moramo koordinate v kartezičnem koordinatnem sistemu transformirati v parametra \( u \) in \( v \). Sfera v \(\mathbb{R}^3\) je
 parametrizirana kot
 \begin{equation} \label{e:toXYZ}
     \begin{split}
@@ -208,11 +210,11 @@ parametrizirana kot
         &Z=R\cos(u)
     \end{split}
 \end{equation}
-$u$ lahko dobimo kot
+\( u \) lahko dobimo kot
 \begin{equation}
         u=\cos^{-1} \left( \frac{X}{R} \right)
 \end{equation}
-za $v$ pa uporabimo prvi dve enačbi
+za \( v \) pa uporabimo prvi dve enačbi
 \begin{equation} \label{e:toU}
     \begin{split}
         &\frac{R\sin(u)Y}{R\sin(u)X}=\frac{\sin(v)}{\cos(v)} \\
@@ -221,9 +223,9 @@ za $v$ pa uporabimo prvi dve enačbi
 \end{equation}
 
 Za sledenje žarku po geodetki, si moramo poleg začetne točke izbrati še začetno smer
-$\left( \frac{du}{dt}, \frac{dv}{dt} \right)$. Tako kot pri ostalih prostorih v nalogi, bomo uporabili "FOV" način
+\(\left( \frac{du}{dt}, \frac{dv}{dt} \right) \). Tako kot pri ostalih prostorih v nalogi, bomo uporabili "FOV" način
 potovanja žarkov iz kamere. Od tu dalje imamo svobodo pri izbiri sfer, po katerih bodo žarki potovali. V tej nalogi smo za
-vsak žarek izračunali središče sfere z najnižjo $z$ koordinato in polmerom $R$, žarki pa bodo vedno "zavijali" navzdol, torej se bodo premikali po poldnevnikih.
+vsak žarek izračunali središče sfere z najnižjo \( z \) koordinato in polmerom \( R \), žarki pa bodo vedno "zavijali" navzdol, torej se bodo premikali po poldnevnikih.
 
 \begin{figure}[H]
 \centering
@@ -241,35 +243,35 @@ vsak žarek izračunali središče sfere z najnižjo $z$ koordinato in polmerom 
 \end{minipage}
 \end{figure}
 
-Središča sfer žarkov se bodo torej nahajala na sferi s polmerom $R$ in središem v kameri $T_{0}$. Za različne smeri žarkov $\vec{v}_{i}$ je bilo središče $C_{i}$ izračunano po sledečem postopku
+Središča sfer žarkov se bodo torej nahajala na sferi s polmerom \( R \) in središem v kameri \( T_{0} \). Za različne smeri žarkov \(\vec{v}_{i} \) je bilo središče \( C_{i} \) izračunano po sledečem postopku
 
 \bigskip
-% \newline TODO error metal kle
-Izračunamo vektorski produkt med navpičnim vektorjem in smerjo $\vec{v}_{i}$. Dobljeni vektor je normala na ravnino krožnice z iskanim središčem, ki gre skozi $T_{0}$
+
+Izračunamo vektorski produkt med navpičnim vektorjem in smerjo \( \vec{v}_{i} \). Dobljeni vektor je normala na ravnino krožnice z iskanim središčem, ki gre skozi \( T_{0} \)
 \begin{equation} \label{e:sphC1}
     \vec{n}_{i}=(0, 0, -1) \times \vec{v}_{i}
 \end{equation}
-Vektor, ki od $T_{0}$ kaže proti iskanemu središču bo ležal v tej ravnini, poleg tega pa bo pravokoten na $\vec{v}_{i}$. Ponovno uporabimo vektorski
+Vektor, ki od \( T_{0} \) kaže proti iskanemu središču bo ležal v tej ravnini, poleg tega pa bo pravokoten na \( \vec{v}_{i} \). Ponovno uporabimo vektorski
 produkt
 \begin{equation}\label{e:sphC2}
     \vec{c}_{i}= \vec{v}_{i} \times \vec{n}_{i}
 \end{equation}
-Krajevni vektor središča nato dobimo tako, da se premaknemo za polmer $R$ v smeri $\vec{c}_{i}$
+Krajevni vektor središča nato dobimo tako, da se premaknemo za polmer \( R \) v smeri \( \vec{c}_{i} \)
 \begin{equation}\label{e:sphC3}
     \vec{r}_{ci}=\frac{\vec{c}_{i}}{\left \| \vec{c}_{i}\right \|} \cdot R + T_{0}
 \end{equation}
 
-Za korak po geodetki bomo $T_{0}$ najprej premaknili za vektor $\vec{r}_{ci}$, tako da bo središče sfere v koordinatnem izhodišču. Nato naredimo
-korak, novo točko $T_{i1}$ pa premaknemo nazaj za vektor $\vec{r}_{ci}$.
-Ker želimo potovati po poldnevnikih, bomo za začetno smer $\left( \frac{du}{dt}, \frac{dv}{dt} \right)$ izbrali $\left( \pm1, 0 \right)$. Korak po poldnevniku bo v $xy$ ravnini tako že pravnilno obrnjen, določiti pa moramo predznak premika po $u$ glede na to, ali se premikamo v pravo smer $\vec{v}_{i}$. To preverimo s skalarnim produktom
+Za korak po geodetki bomo \( T_{0} \) najprej premaknili za vektor \( \vec{r}_{ci} \), tako da bo središče sfere v koordinatnem izhodišču. Nato naredimo
+korak, novo točko \( T_{i1} \) pa premaknemo nazaj za vektor \( \vec{r}_{ci} \).
+Ker želimo potovati po poldnevnikih, bomo za začetno smer \(\left( \frac{du}{dt}, \frac{dv}{dt} \right) \) izbrali \(\left( \pm1, 0 \right) \). Korak po poldnevniku bo v \( xy \) ravnini tako že pravilno obrnjen, določiti pa moramo predznak premika po \( u \) glede na to, ali se premikamo v pravo smer \( \vec{v}_{i} \). To preverimo s skalarnim produktom
 \bigskip
 \newline
-Naredimo korak v smeri $\left( 1, 0 \right)$ in označimo dobljeno točko s $T_{t}$. Vektor v smeri od $T_{0}$ do $T_{t}$ označimo z $\vec{v}_{t}$.
+Naredimo korak v smeri \(\left( 1, 0 \right) \) in označimo dobljeno točko s \( T_{t} \). Vektor v smeri od \( T_{0} \) do \( T_{t} \) označimo z \( \vec{v}_{t} \).
 Izračunamo skalarni produkt
 \begin{equation} \label{e:dirCorr}
     a= \vec{v}_{i} \vec{v}_{t}^T
 \end{equation}
-Če se premikamo v pravi smeri, bo $a > 0$, drugače moramo za začetno smer izbrati negativni predznak.
+Če se premikamo v pravi smeri, bo \( a > 0 \), drugače moramo za začetno smer izbrati negativni predznak.
 \bigskip
 \newline
 V nadaljevanju se premikamo po geodetki z eno izmed aproksimacijskih metod. V splošnem lahko za take sisteme uporabimo Eulerjevo metodo
@@ -279,19 +281,19 @@ V nadaljevanju se premikamo po geodetki z eno izmed aproksimacijskih metod. V sp
         &\vec{y}_{n+1}=\vec{y}_{n}+h \cdot \vec{f}(t_{n}, \vec{y}_{n})
     \end{split}
 \end{equation},
-problem pa se pojavi pri $\cot(y_{1})$ v eni izmed enačb, ki ima pole pri
-$k\pi$, $k \in \mathbb{Z}$. Da se temu izognemo ne smemo uporabljati fiksne dolžine koraka, temveč moramo uporabiti adaptivne metode, kot je DOPRI5,
+problem pa se pojavi pri \( \cot(y_{1}) \) v eni izmed enačb, ki ima pole pri
+\( k\pi \), \( k \in \mathbb{Z} \). Da se temu izognemo ne smemo uporabljati fiksne dolžine koraka, temveč moramo uporabiti adaptivne metode, kot je DOPRI5,
 ki z uporabo večih metod estimira napako približka, in temu primerno prilagodi korak.
 \bigskip
 \newline
 Algoritmi, ki implementirajo opisane metode so predstavljeni v naslednjem poglavju.
 \newpage
 
-\section{Algorimi za 2-sphere}
-Funkcija \textbf{sphereCenter} implementira formule \eqref{e:sphC1}, \eqref{e:sphC2}, \eqref{e:sphC3}, \textbf{initializeSphere} formule \eqref{e:geoSys}, \eqref{e:toU}, \eqref{e:toV}, \eqref{e:dirCorr}, \eqref{e:euler}, \textbf{uvToVec} pa formulo \eqref{e:toXYZ}. Funkcija \textbf{DOPRI5} predstavlja implementacijo DOPRI5, ki naredi po en korak glede na trenutno velikost koraka, in skupaj s približkom vrne tudi novo velikost koraka. Tu lahko uporabimo tudi katero drugo adaptivno funkcijo. Ostale funkcije so opisane v
-razdelku %TODO: link razdelek
+\section{Algoritmi za 2-sphere}
+Funkcija \textbf{sphereCenter} implementira formule \eqref{e:sphC1}, \eqref{e:sphC2}, \eqref{e:sphC3}, \textbf{initializeSphere} formule \eqref{e:geoSys}, \eqref{e:toU}, \eqref{e:toXYZ}, \textbf{uvToVec} pa formulo (20). Funkcija \textbf{DOPRI5} predstavlja implementacijo DOPRI5, ki naredi po en korak glede na trenutno velikost koraka, in skupaj s približkom vrne tudi novo velikost koraka. Tu lahko uporabimo tudi katero drugo adaptivno funkcijo. Ostale funkcije so opisane v
+razdelku 
 \begin{algorithm}
-    \caption{Sledenje žarku na sferi $\mathbb{S}^{2}$}
+    \caption{Sledenje žarku na sferi \(\mathbb{S}^{2}\)}
 \begin{algorithmic}
     \Function{traceRayNonEuclidean}{$T_{0}$, $\vec{v}$, step, maxIt, objects, R, $\varepsilon$}
 
