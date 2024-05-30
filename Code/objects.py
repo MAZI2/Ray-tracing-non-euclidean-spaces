@@ -196,6 +196,7 @@ class Plane(_IntersectableObject):
         self.a, self.b, self.c = normal
         self.u, self.v = vector_uvw.vector_to_degrees(normal)
         self.w = 0 # Plane has no roll
+        self.d = np.dot(self.normal, self.position)
 
     @property
     def orientation(self) -> np.ndarray:
@@ -205,7 +206,7 @@ class Plane(_IntersectableObject):
     def orientation(self, orientation: np.ndarray):
         self.normal = vector_uvw.degrees_to_vector(orientation) 
         # u v w are set in normal setter
-        self.d = np.dot(self.normal, self.position)
+        # self.d tud nastav k normal nastavm
     
     # Scene called functions
     def move(self, x: float = 0, y: float = 0, z: float = 0, dx: float = 0, dy: float = 0, dz: float = 0):

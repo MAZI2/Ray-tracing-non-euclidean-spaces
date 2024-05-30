@@ -47,42 +47,53 @@ To je ravno zaradi potovanja žarkov. Ker smo v evklidskem prostoru, bo žarek p
 Kaj pa pravzaprav je neevklidski prostor?
 Neevklidski prostor je preprosto prostor, ki ne sledi pravilom evklidske geometrije. Torej prostor ni raven ampak je ukrivljen, vsota kotov v trikotniku je večja ali pa manjša od 180 stopinj... Neevklidski prostor delimo na več različnih geometrij med katerimi so recimo hiperbolična geometrija, eliptična geometrija, sferična geometrija, projektivna geometrija...
 
-\section{Implementacija osnovnega algoritma ray tracing}
-Vsak objekt v prostoru opisuje enačba oblike:
-\begin{equation}
-    f(x,y,z)=0
-\end{equation}
 
-Naš program je sposoben upodobiti preprost prizor z osnovnim senčenjem po naslednjem postopku:
-\newline
+\section{Implementacija osnovnega algoritma ray tracing}
+\subsection{Objekti v sceni}
+Posamični objekti v prostoru so podani z enačbo v obliki:
+$$o(x,y,z): \mathbb{R}^3 \to R =0$$
+Za kroglo je to enačba: 
+$$(\vec{P} - \vec{C})^2 - r^2 = 0$$ 
+kjer je $\vec{P}$ točka na krogli, $\vec{C}$ središče krogle in $r$ polmer krogle. \newline
+Za ravnino pa enačba 
+$$\vec{n} \cdot \vec{P} - \vec{n} \cdot \vec{C} = 0$$
+kjer je $\vec{n}$ normala ravnine, $\vec{P}$ pa  koeficienti normale ravnine, $d$ pa konstanta.
+
+\subsection{Prostori}
+Vsak prostor implementira funkcijo, v obliki
+$$s(t): \mathbb{R} \to \mathbb{R}^3 = [x, y, z]^T$$
+ki zna žarek podan z točko $\vec{T}$ in smerjo $\vec{v}$ premakniti za $t$ korakov v smeri $\vec{v}$.
+V primeru evklidskega prostora je to preprosto premikanje za $t$ korakov v smeri $\vec{v}$, 
+$$\vec{T}_{n+1} = \vec{T}_{n} + t \cdot \vec{v}$$
+Prostora flat torus in 2-sphere sta podrobneje opisana kasneje.
+
+\subsection{Algoritem}
+Želeli smo si splošen način, kako lahko premikamo žarek skozi katerikoli prostor. Tako smo zasnovali algoritem, ki temelji na iskanju ničle funkcije vsakega posameznega objekta $o = (x, y, z)$, ko v njo vstavimo
+pozicijo žarka ob podanem "času" $t$. Algoritem torej išče parameter $t$ za katerega velja:
+$$f = o(s(t)) = 0$$
+
 \bigskip
 \begin{enumerate}
-  \item 
-\item V poljubnem prostoru premikamo žarek za nek korak, kjer vsakič preverimo, če se je $f$ v novi točki spremenil predznak.
-\item Poiščemo natančnejše presečišče tako, da razpolavljamo korak, doker se uspešno ne premaknemo naprej brez spremembe predznaka. Naprej se spet premikamo, doker se ne spremeni predznak. Postopek ponavljamo, doker nismo od objekta oddaljeni za manj kot $\varepsilon$.
+\item Začnemo v točki $T_{0}$ - pozicija kamere, iz koder pošiljamo žarke v smeri, določene z Field of view (FOV) kamere, ter resolucijo slike. 
+\item Žarek v vsakem koraku premaknemo za $h$ v smeri $\vec{v}$.
+\item V poljubnem prostoru premikamo žarek za nek korak, kjer vsakič preverimo vrednost funkcije $f$, ki jo vrne vsak objekt.
+\item Če se v neki točki funkciji predznak, vemo da smo v tem koraku vstopili v objekt. Razpolovimo korak in ga ponovimo.
+\item Če je v neki točki aproksimacija odvoda $f$ pozitivna, vemo da se od objekta oddaljujemo. Mogoče smo ga z korakom preskočili, ali pa smo odšli mimo. Razpolovimo korak in ga ponovimo.
+\item Postopek razpolavljanja ponavljamo, kdokler korak ni manjši kot $\varepsilon$.
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.5\linewidth]{intersect.png}
     \caption{Iskanje natančnejšega presečišča}
     \label{Slika:Iskanje natančnejšega presečišča}
 \end{figure}
-\item[] V našem prostoru so bili objekti dveh tipov. Sfere s središčem v $(x_{0}, y_{0}, z_{0})$ in polmerom $r$, podane v obliki $(x-x_{0})^{2}+(y-y_{0})^{2}+(z-z_{0})^{2}=r^{2}$ in ravnine podane z $ax+by+cz=d$. Razdalja točke do sfere je bila izračunana kot
-\begin{equation} \label{e:distSphere}
-    l=\left \| \vec{r}_{t}-\vec{r}_{ci} \right \| - r
-\end{equation}
-kjer je $\vec{r}_{t}$ krajevni vektor točke žarka, $\vec{r}_{ci}$ pa krajevni vektor središča sfere, razdalja do ravnine pa kot
-\begin{equation} \label{e:distPlane}
-    l=\frac{\left | ax_{t}+by_{t}+cz_{t}-d \right |}{\sqrt{a^{2}+b^{2}+c^{2}}}
-\end{equation}
-kjer so $x_{t}, y_{t}, z_{t}$ koordinate točke žarka.
-\item Žarek nato pošljemo od presečišča v smeri proti viru svetlobe, pri tem pa preverjamo presečišča podobno kot pri (1.)
+\item Žarek od točke presečišča pošljemo v smer luči. Če žarek pride do luči brez da bi se prej sekal z objektom, je točka osvetljena.
+\item Glede na barvo objekta in ugotovljeno osvetlenost pobarvamo točko na sliki ki pripada žarku.
 \end{enumerate}
-Vsak žarek predstavlja piksel na končni sliki. Če se je žarek sekal s katerim od objektov, mu pripišemo barvo tega objekta. Če žarek v nadaljevanju ni uspešno prišel do vira svetlobe, barvo prvotnega žarka nekoliko zatemnimo (RGB vrednosti pomnožimo z nekim faktorjem $\alpha < 0$)
 
 \bigskip
 V nadaljevanju smo implementirali algoritem za sledenje žarku na tridimenzionalnem ploščatem torusu $\mathbb{T}_{pl}^{3}$ in dvodimenzionalni sferi $\mathbb{S}^2$ v $\mathbb{R}^3$. Algoritem za sledenje žarku v evklidskem prostoru je enak algoritmu za torus, brez preslikave žarka na željeno domeno. Sledenje v smeri vira svetlobe uporablja algoritem za sledenje žarku v evklidskem prostoru, pri tem pa ga pri korakih dolžine $h$ omejimo na maksimalno število korakov
-$k_{max}= \left \lceil \frac{\left \|\vec{r}_{l}-\vec{r}_{t} \right \|}{h} \right \rceil$, kjer je $\vec_{r}_{l}$ krajevni vektor vira svetlobe,
-$\vec_{r}_{t}$ pa krajevni vektor točke presečišča.
+%$k_{max}= \left \lceil \frac{\left \|\vec{r}_{l}-\vec{r}_{t} \right \|}{h} \right \rceil$, kjer je $\vec_{r}_{l}$ krajevni vektor vira svetlobe,
+%$\vec_{r}_{t}$ pa krajevni vektor točke presečišča. TODO error metal kle
 
 \section{Sledenje žarkom na ploščatem torusu $\mathbb{T}_{pl}^{3}$} 
 \subsection{Kaj je tri dimenzionalni ploščati torus?}
@@ -105,14 +116,14 @@ Ključni vpogled, je da žarek omejimo, kar lahko v programskih jezikih storimo 
         
 \begin{align*}
 x &= \left( \text{x} + \text{korak} \cdot \text{smer x} \right) \mod 1 \\
-y &= \left( \text{y} + \text{korak} \cdot \text{smer y} \right) \mod 1 \\
+y &= \left( \text{y} + \text{korak} \cdot \text{smer y} \right) \mod 1 \\ %TODO Kle a b c?
 z &= \left( \text{z} + \text{korak} \cdot \text{smer z} \right) \mod 1
 \end{align*}
 
 % added
-% TODO: formule za mapiranje žarka na zeljeno domeno
+%TODO: formule za mapiranje žarka na zeljeno domeno
 
-Funkciji \textbf{signs} in \textbf{checkIntersect} implementirata funkcije $f$, \textbf{distance} pa implementira formuli \eqref{e:distSphere} in 
+Funkciji \textbf{signs} in \textbf{checkIntersect} implementirata funkcije $f$, \textbf{distance} pa implementira formuli \eqref{e:distSphere} in %TODO A tukej smo zdj opisval funkcije iz mathlaba al iz pythona? Ker v pythonu nimam teh funkcij zares vec..
 \eqref{e:distPlane}. Funkcija \textbf{remap} implementira formule %TODO: link enacbe
 \begin{algorithm}
     \caption{Sledenje žarku na ploščatem torusu}
@@ -155,7 +166,7 @@ Funkciji \textbf{signs} in \textbf{checkIntersect} implementirata funkcije $f$, 
 Ko program poženemo, dobimo lep vizualni rezultat.
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\linewidth]{Images/flat_torus.png}
+    \includegraphics[width=0.5\linewidth]{Images/flat_torus.png} %TODO A damo uno sliko kle k je več repetitionov?
     \caption{Rezultat "ray tracinga" za tri dimenzionalni ploščati torus}
     \label{Slika:Rezultat "ray tracinga" za tri dimenzionalni ploščati torus}
 \end{figure}
@@ -233,7 +244,7 @@ vsak žarek izračunali središče sfere z najnižjo $z$ koordinato in polmerom 
 Središča sfer žarkov se bodo torej nahajala na sferi s polmerom $R$ in središem v kameri $T_{0}$. Za različne smeri žarkov $\vec{v}_{i}$ je bilo središče $C_{i}$ izračunano po sledečem postopku
 
 \bigskip
-
+% \newline TODO error metal kle
 Izračunamo vektorski produkt med navpičnim vektorjem in smerjo $\vec{v}_{i}$. Dobljeni vektor je normala na ravnino krožnice z iskanim središčem, ki gre skozi $T_{0}$
 \begin{equation} \label{e:sphC1}
     \vec{n}_{i}=(0, 0, -1) \times \vec{v}_{i}
@@ -374,9 +385,9 @@ razdelku %TODO: link razdelek
 
 \section{Razdelitev dela}
 \begin{itemize}
-  \item Blaž Bergant: DOPIŠI SAM
-  \item Martin Jereb: ogrodje poročila, razlaga podnaloge za Torus, priprava PowerPoint predstavitve
-\item Matjaž Pogačnik: Implementacija in izpeljava algoritmov za 2Sphere.
+  \item Blaž Bergant: Zasnova programa, implementacija osnovnega raytracing algoritma, izpeljava določenih formul za hitrejše delovanje.
+  \item Martin Jereb: Priprava poročila, razlaga in implemenacija prostora flat torus, priprava predstavitve.
+\item Matjaž Pogačnik: Implementacija in izpeljava algoritmov za 2Sphere, priprava poročila in generiranje slik.
 \end{itemize}
 
 \section{Viri}
