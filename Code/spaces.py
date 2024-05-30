@@ -201,26 +201,26 @@ class TwoSphere(_Space):
         # t = t/360 * 2*np.pi
         u = ray.direction_deg[0]
 
-        if ray.direction_deg is self.last_direction_deg and ray.origin is self.last_origin:
-            sphere_center = self.last_sphere_center
-        else:
-            vector_to_center = vector_uvw.degrees_to_vector((u, ray.direction_deg[1] - 90)) # Vektor ki gre od točke prot centru "sfere"
-            sphere_center = ray.origin + vector_to_center * self.R # Za R proti središču sfere od točke na sferi je center
+        # if ray.direction_deg is self.last_direction_deg and ray.origin is self.last_origin:
+        #     sphere_center = self.last_sphere_center
+        # else:
+        vector_to_center = vector_uvw.degrees_to_vector((u, ray.direction_deg[1] - 90)) # Vektor ki gre od točke prot centru "sfere"
+        sphere_center = ray.origin + vector_to_center * self.R # Za R proti središču sfere od točke na sferi je center
 
-            self.last_direction_deg = ray.direction_deg
-            self.last_origin = ray.origin
-            self.last_sphere_center = sphere_center
+        # self.last_direction_deg = ray.direction_deg
+        # self.last_origin = ray.origin
+        # self.last_sphere_center = sphere_center
 
         u = np.radians(u)
         # t is already in radians
 
-        x = self.R * np.cos(u) * np.cos(-t + np.pi/2) + sphere_center[0]
-        y = self.R * np.sin(-t + np.pi/2) + sphere_center[1]
-        z = self.R * np.sin(u) * np.cos(-t + np.pi/2) + sphere_center[2]
+        x = self.R * np.cos(u) * np.cos(-t - np.pi/2) + sphere_center[0]
+        y = self.R * np.sin(-t - np.pi/2) + sphere_center[1]
+        z = self.R * np.sin(u) * np.cos(-t - np.pi/2) + sphere_center[2]
         return np.array([x, y, z])
 
     def get_intersection(self, ray: Ray, object: _IntersectableObject) -> float:
-        return adaptive_step(ray, object, self, max_t=2*np.pi)
+        return adaptive_step(ray, object, self, t0=0)
 SpacesRegistry.register("twosphere", TwoSphere, 
                               "TwoSphere space is a space where rays travel on the surface of a sphere with radius R.\n" + 
                               "      Usage: TwoSphere [R=2]")
