@@ -1,5 +1,5 @@
 \documentclass[titlepage]{article}
-% \usepackage{algpseudocode}
+\usepackage{algpseudocode}
 \usepackage{algorithm}
 \usepackage{graphicx} % Required for inserting images
 \usepackage[utf8]{inputenc}
@@ -48,7 +48,7 @@ Kaj pa pravzaprav je neevklidski prostor?
 Neevklidski prostor je preprosto prostor, ki ne sledi pravilom evklidske geometrije. Torej prostor ni raven ampak je ukrivljen, vsota kotov v trikotniku je večja ali pa manjša od 180 stopinj... Neevklidski prostor delimo na več različnih geometrij med katerimi so recimo hiperbolična geometrija, eliptična geometrija, sferična geometrija, projektivna geometrija...
 
 \section{Implementacija osnovnega algoritma ray tracing}
-Implementirali smo osnovni algoritem sledenja žarkov v prostoru, kjer so objekti podani z
+Vsak objekt v prostoru opisuje enačba oblike:
 \begin{equation}
     f(x,y,z)=0
 \end{equation}
@@ -57,6 +57,7 @@ Naš program je sposoben upodobiti preprost prizor z osnovnim senčenjem po nasl
 \newline
 \bigskip
 \begin{enumerate}
+  \item 
 \item V poljubnem prostoru premikamo žarek za nek korak, kjer vsakič preverimo, če se je $f$ v novi točki spremenil predznak.
 \item Poiščemo natančnejše presečišče tako, da razpolavljamo korak, doker se uspešno ne premaknemo naprej brez spremembe predznaka. Naprej se spet premikamo, doker se ne spremeni predznak. Postopek ponavljamo, doker nismo od objekta oddaljeni za manj kot $\varepsilon$.
 \begin{figure}[H]
@@ -109,7 +110,7 @@ z &= \left( \text{z} + \text{korak} \cdot \text{smer z} \right) \mod 1
 \end{align*}
 
 % added
-%TODO: formule za mapiranje žarka na zeljeno domeno
+% TODO: formule za mapiranje žarka na zeljeno domeno
 
 Funkciji \textbf{signs} in \textbf{checkIntersect} implementirata funkcije $f$, \textbf{distance} pa implementira formuli \eqref{e:distSphere} in 
 \eqref{e:distPlane}. Funkcija \textbf{remap} implementira formule %TODO: link enacbe
@@ -232,7 +233,7 @@ vsak žarek izračunali središče sfere z najnižjo $z$ koordinato in polmerom 
 Središča sfer žarkov se bodo torej nahajala na sferi s polmerom $R$ in središem v kameri $T_{0}$. Za različne smeri žarkov $\vec{v}_{i}$ je bilo središče $C_{i}$ izračunano po sledečem postopku
 
 \bigskip
-\newline
+
 Izračunamo vektorski produkt med navpičnim vektorjem in smerjo $\vec{v}_{i}$. Dobljeni vektor je normala na ravnino krožnice z iskanim središčem, ki gre skozi $T_{0}$
 \begin{equation} \label{e:sphC1}
     \vec{n}_{i}=(0, 0, -1) \times \vec{v}_{i}
