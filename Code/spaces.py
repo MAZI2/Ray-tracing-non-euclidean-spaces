@@ -85,7 +85,7 @@ SpacesRegistry.register("euclidean", Euclidean,
 
 class FlatTorus(_Space):
     def __init__(self, boundry_size: np.ndarray = np.array([10, 10, 10]),
-                 repetitions: int = 10) -> None:
+                 repetitions: int = 30) -> None:
         super().__init__()
         self.boundry_size = boundry_size
         self.repetitions = repetitions
@@ -182,7 +182,7 @@ SpacesRegistry.register("flattorus", FlatTorus,
 
 
 class TwoSphere(_Space):
-    def __init__(self, R: float = 10.0) -> None:
+    def __init__(self, R: float = 5.0) -> None:
         super().__init__()
         self.R = R
         self.type = _ObjectTypes.space

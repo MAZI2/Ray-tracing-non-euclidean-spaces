@@ -8,13 +8,14 @@ from spaces import Euclidean, FlatTorus, TwoSphere
 from scene import Scene
 Scene.configure({"sphere": Sphere((3, 0, 0), 1, (255, 0, 255)), 
                  "sphere1": Sphere((1.8, 0.8, 1), 0.2, (0, 255, 255)), 
+                 "sphere3": Sphere((1.8, -0.8, -1), 0.2, (0, 255, 255)), 
                  "plane": Plane((0, -2, 0), (0, 1, 0), (255, 100, 0)),
                  "light": Light((0, 3, 3), ), 
                  "camera": Camera((0, 0, 0), (0, 0, 0), (320, 240), 180), # 127 za 90 stopinj levo desno fov
-                 "twosphere": TwoSphere(4)})
+                 "euclidean": Euclidean()})
 
 from ui import _UIThread
-_UIThread.configure(3)
+_UIThread.configure(4)
 
 # IMPORTS
 from working import Working
