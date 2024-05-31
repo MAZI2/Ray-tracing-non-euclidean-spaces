@@ -63,12 +63,10 @@ Neevklidski prostor je preprosto prostor, ki ne sledi pravilom evklidske geometr
 \subsection{Objekti v sceni}
 Posamični objekti v prostoru so podani z enačbo v obliki:
 \[ o(x,y,z): \mathbb{R}^3 \to R =0 \]
-Za kroglo je to enačba: 
-\[ (\vec{P} - \vec{C})^2 - r^2 = 0 \]
-kjer je \(\vec{P}\) točka na krogli, \(\vec{C}\) središče krogle in \(r\) polmer krogle. \newline
-Za ravnino pa enačba 
-\[ \vec{n} \cdot \vec{P} - \vec{n} \cdot \vec{C} = 0 \]
-kjer je \(\vec{n}\) normala ravnine, \(\vec{P}\) pa koeficienti normale ravnine, \(d\) pa konstanta.
+Za kroglo s središčem v $(x_{0}, y_{0}, z_{0})$ in polmerom $r$ je to enacba
+\[(x-x_{0})^{2}+(y-y_{0})^{2}+(z-z_{0})^{2}-r^{2}=0 \],
+za ravnino pa enačba 
+\[ ax+by+cz-d = 0 \]
 
 \subsection{Prostori}
 Vsak prostor implementira funkcijo, v obliki
@@ -76,20 +74,18 @@ Vsak prostor implementira funkcijo, v obliki
 ki zna žarek podan z točko \(\vec{T}\) in smerjo \(\vec{v}\) premakniti za \(t\) korakov v smeri \(\vec{v}\).
 V primeru evklidskega prostora je to preprosto premikanje za \(t\) korakov v smeri \(\vec{v}\), 
 \[ \vec{T}_{n+1} = \vec{T}_{n} + t \cdot \vec{v} \]
-Prostora flat torus in 2-sphere sta podrobneje opisana kasneje.
+v 2-Sphere pa $s(t)$ vrača približek. Prostora flat torus in 2-sphere sta podrobneje opisana kasneje.
 
 \subsection{Algoritem}
-Želeli smo si splošen način, kako lahko premikamo žarek skozi katerikoli prostor. Tako smo zasnovali algoritem, ki temelji na iskanju ničle funkcije vsakega posameznega objekta \( o = (x, y, z) \), ko v njo vstavimo pozicijo žarka ob podanem "času" \( t \). Algoritem torej išče parameter \( t \) za katerega velja:
-\[ f = o(s(t)) = 0 \]
+Naš program je sposoben upodobiti preprost prizor z osnovnim senčenjem
+po naslednjem postopku
 
 \bigskip
 \begin{enumerate}
 
 \item Začnemo v točki \( T_{0} \) - pozicija kamere, iz koder pošiljamo žarke v smeri, določene z Field of view (FOV) kamere, ter resolucijo slike. 
-\item Žarek v vsakem koraku premaknemo za \( h \) v smeri \(\vec{v}\).
 \item V poljubnem prostoru premikamo žarek za nek korak, kjer vsakič preverimo vrednost funkcije \( f \), ki jo vrne vsak objekt.
 \item Če se v neki točki funkciji predznak spremeni, vemo da smo v tem koraku vstopili v objekt. Razpolovimo korak in ga ponovimo.
-\item Če je v neki točki aproksimacija odvoda \( f \) pozitivna, vemo da se od objekta oddaljujemo. Mogoče smo ga z korakom preskočili, ali pa smo odšli mimo. Razpolovimo korak in ga ponovimo.
 \item Postopek razpolavljanja ponavljamo, dokler korak ni manjši kot \( \varepsilon \).
 
 \begin{figure}[H]
@@ -124,9 +120,8 @@ Običajni torusi so ukrivljeni in se jim ukrivljenost po površini spreminja. Pl
     \caption{Žarek v dvodimenzionalnem ploščatem torusu}
     \label{Slika:Žarek v dvodimenzionalnem ploščatem torusu}
 \end{figure}
-
 \subsection{Algoritmi za flat torus}
-Ključni vpogled, je da žarek omejimo na domeno. V spodnji funkciji mapToCube je Tn začetni vektor, a je začetek domene, b konec domene.
+Ključni vpogled, je da žarek omejimo na domeno. V spodnji funkciji mapToCube je $T_{n}$ začetni vektor, a je začetek domene, b konec domene.
 \begin{algorithm}[H]
 \caption{Map to Cube}\label{alg:mapToCube}
 \begin{algorithmic}[1]
@@ -140,8 +135,8 @@ Ključni vpogled, je da žarek omejimo na domeno. V spodnji funkciji mapToCube j
 \end{algorithmic}
 \end{algorithm}
 
-Funkciji \textbf{signs} in \textbf{checkIntersect} implementirata funkcije \( f \), \textbf{distance} pa implementira formuli (6) in 
-(7). Funkcija \textbf{remap} implementira funkcijo mapToCube.
+Funkcija \textbf{traceRayFlatTorus} sprejme začetno točko $T_{0}$, smer $\vec{v}$, korak step, maksimalno število iteracij maxIt, množico objektov objects in meje $a$ in $b$ domene na katero bomo preslikovali koordinate žarka.
+Pomožni funkciji \textbf{signs} in \textbf{checkIntersect} implementirata funkcije objektov \( o(x,y,z) \).
 \begin{algorithm}[H]
     \caption{Sledenje žarku na ploščatem torusu}
 \begin{algorithmic}
@@ -151,10 +146,11 @@ Funkciji \textbf{signs} in \textbf{checkIntersect} implementirata funkcije \( f 
     \State signs $\gets$ \textbf{signs}($T_{n}$, objects)
     \Comment{izračunamo začetne predznake}
     \\
+    \State t $\gets$ 0
   \While{true}
-    \If{step == maxIt}
+    \If{t == maxIt}
       \State \Return{-1}
-    \ElsIf{\textbf{distance}($T_{n}$, objects) $<$ $\varepsilon$}
+    \ElsIf{step $<$ $\varepsilon$}
       \State \Return{$T_{n}$}
     \EndIf
     \State $T_{n+1}$ $\gets$ $T_{n}+step \cdot \vec{v}$
@@ -172,12 +168,15 @@ Funkciji \textbf{signs} in \textbf{checkIntersect} implementirata funkcije \( f 
         \State step $\gets$ step/2
     \Else
       \State $T_{n}$ $\gets$ $T_{n+1}$
+      \State t $\gets$ t+1
     \EndIf
   \EndWhile
 \EndFunction
 \end{algorithmic}
 \end{algorithm}
 
+\newpage
+\subsection{Interpretacija rezultatov}
 Ko program poženemo, dobimo lep vizualni rezultat.
 \begin{figure}[H]
     \centering
@@ -231,11 +230,11 @@ parametrizirana kot
     \end{split}
 \end{equation}
 \( u \) lahko dobimo kot
-\begin{equation}
+\begin{equation} \label{e:toU}
         u=\cos^{-1} \left( \frac{X}{R} \right)
 \end{equation}
 za \( v \) pa uporabimo prvi dve enačbi
-\begin{equation} \label{e:toU}
+\begin{equation} \label{e:toV}
     \begin{split}
         &\frac{R\sin(u)Y}{R\sin(u)X}=\frac{\sin(v)}{\cos(v)} \\
         &v=\tan^{-1} \left(\frac{Y}{X} \right)
@@ -309,21 +308,23 @@ ki z uporabo večih metod estimira napako približka, in temu primerno prilagodi
 Algoritmi, ki implementirajo opisane metode so predstavljeni v naslednjem poglavju.
 \newpage
 
-\section{Algoritmi za 2-sphere}
-Funkcija \textbf{sphereCenter} implementira formule \eqref{e:sphC1}, \eqref{e:sphC2}, \eqref{e:sphC3}, \textbf{initializeSphere} formule \eqref{e:geoSys}, \eqref{e:toU}, \eqref{e:toXYZ}, \textbf{uvToVec} pa formulo (20). Funkcija \textbf{DOPRI5} predstavlja implementacijo DOPRI5, ki naredi po en korak glede na trenutno velikost koraka, in skupaj s približkom vrne tudi novo velikost koraka. Tu lahko uporabimo tudi katero drugo adaptivno funkcijo. Ostale funkcije so opisane v
+\subsection{Algoritmi za 2-sphere}
+Funkcija \textbf{traceRay2Sphere} sprejme začetko točko $T_{0}$, smer $\vec{v}$, velikost koraka step, maksimalno število iteracij maxIt, množico objektov objects, polmer sfere $\mathbb{S}^2$ in natančnost presečišča $\varepsilon$. 
+Pomožna funkcija \textbf{sphereCenter} implementira formule \eqref{e:sphC1}, \eqref{e:sphC2}, \eqref{e:sphC3}, \textbf{initializeSphere} formule \eqref{e:geoSys}, \eqref{e:toU}, \eqref{e:toV}, \textbf{uvToVec} pa formulo \eqref{e:toXYZ}. Funkcija \textbf{DOPRI5} predstavlja implementacijo DOPRI5, ki naredi po en korak glede na trenutno velikost koraka, in skupaj s približkom vrne tudi novo velikost koraka. Tu lahko uporabimo tudi katero drugo adaptivno funkcijo. Ostale funkcije so opisane v
 razdelku 
 \begin{algorithm}
     \caption{Sledenje žarku na sferi \(\mathbb{S}^{2}\)}
 \begin{algorithmic}
-    \Function{traceRayNonEuclidean}{$T_{0}$, $\vec{v}$, step, maxIt, objects, R, $\varepsilon$}
+    \Function{traceRay2Sphere}{$T_{0}$, $\vec{v}$, step, maxIt, objects, R, $\varepsilon$}
 
     \State $T_{n}$, $T_{n+1}$ $\gets$ $T_{0}$
     \State signs $\gets$ \textbf{signs}($T_{n}$, objects)
     \Comment{izračunamo začetne predznake}
     \State center, I
     \\
+    \State t $\gets$ 0
   \While{true}
-    \If{step == maxIt}
+    \If{t == maxIt}
     \State \Return{-1}
     \ElsIf{step == 0}
       \State center $\gets$ \textbf{sphereCenter}($T_{0}$, d, R)
@@ -351,6 +352,7 @@ razdelku
     \Else
       \State $\vec{y}_{n}$ $\gets$ $\vec{y}_{n+1}$
       \State $T_{n}$ $\gets$ $T_{n+1}$
+      \State t $\gets$ t+1
     \EndIf
   \EndWhile
 \EndFunction
@@ -365,7 +367,7 @@ razdelku
     \State $T_{n}$, $T_{n+1}$ $\gets$ $T_{0}$
     \\
   \While{true}
-    \If{\textbf{distance}($T_{n}$, object) $<$ $\varepsilon$}
+    \If{step $<$ $\varepsilon$}
       \State \Return{$T_{n}$}
     \EndIf
     \State $\vec{y}_{n+1}, \hbox{step}$ $\gets$ \textbf{euler}($\vec{y}_{n}$, step)
@@ -389,21 +391,68 @@ razdelku
 \end{algorithmic}
 \end{algorithm}
 
-\section {Primerjava metode sledenje žarku v evklidskem in neevklidskem prostoru}
+\newpage
+\subsection{Interpretacija rezultatov}
+Za prikaz značilnosti slik generiranih na dvodimenzionalni sferi $\mathbb{S}^{2}$ smo generirali sliko scene z dvema različno velikima kroglama, kjer je 
+vir svetlobe "skrit" za eno izmed krogel. Na \hyperref[fig:2sphRays]{sliki žarkov} vidimo dva snopa žarkov z zaporednimi rdečimi točkami, ki predstavljajo korake. Podobno so z modrimi točkami prikazani žarki proti viru svetlobe. Na \hyperref[fig:2sphRend]{generirani sliki} so piksli, katerim pripadata snopa žarkov, označeni z rdečo. Opazujemo moder objekt na generirani sliki, ki mu pripada manjša izmed krogel, ki se na generirani sliki pojavi v dveh delih, kjer je en delno osvetljen. Rezultat je pričakovan, saj bodo do neke meje zgornji žarki zaokrožili do krogle in jo tako zadeli iz spodnje strani. Ta stran je tudi edina, ki je delno osvetljena, kar lahko vidimo iz uspešne nadaljnje poti žarkov proti viru svetlobe. Ko se premikamo nižje po stolpcu bodo žarki obhajali kroglo, dokler ne bomo dovolj nizko, da jo spet direktno zadanemo. Tokrat žarki ne bodo uspeli priti do vira svetlobe.
+\begin{figure}[H]
+\centering
+\begin{minipage}{.5\textwidth}
+  \centering
+  \includegraphics[width=1\linewidth]{Images/2sphere_render.png}
+  \captionof{figure}{Generirana slika}
+  \label{fig:2sphRend}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}
+  \centering
+  \includegraphics[height=1\linewidth]{Images/2sphere_rays.png}
+  \captionof{figure}{Slika snopov žarkov}
+  \label{fig:2sphRays}
+\end{minipage}
+\end{figure}
 
+\bigskip
+\newline
+Če bi spremljali generirane slike ob premikanju kamere, bi videli, da objekti ki so naravnost pred nami pogosto v sliko vstopajo od zgoraj, kar je prav tako pričakovano. Zgornji žarki, bodo imeli namreč najdaljši doseg, saj je središče njihove sfere premaknjeno najdlje stran od kamere v smeri premikanja. Na \hyperref[fig:sequence]{sekvenci slik} se mimo rdeče krogle premikamo modri krogli, ki je v celoti osvetljena. V ozadju vidimo oranžno ravnino.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{Images/sequence.png}
+    \caption{Zaporedje slik s premikanjem kamere}
+    \label{fig:sequence}
+\end{figure}
+Sceno, iz sekvence lahko vidimo na \hyperref[fig:2sphRays2]{sliki žarkov}, kjer je prikazan snop žarkov ene vrstice pikslov.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{Images/2sphere_rays2.png}
+    \caption{Žarki vrstice pikslov}
+    \label{fig:2sphRays2}
+\end{figure}
 
-\begin{itemize}
-\item sledi pravilom evklidske geometrije
-\item prostor je raven (žarki potujejo naravnost)
-\item koti v trikotniku so skupaj 180 stopinj
-\item nam najbolj poznan
-\end{itemize}
+\section{Primerjava metode sledenje žarku v evklidskem in neevklidskem prostoru}
+Primerjamo enako pozicijo kamere in enako postavitev objektov v prostoru v evklidskem in dveh neevklidskih prostorih. Postavitev objektov je enaka kot
+na \hyperref[fig:2sphRays2]{sliki 11}. Za razliko od evklidskega prostora pri torusu opazimo podvojene objekte, kjer pričakujemo, da bi z večjim številom korakov bilo čedalje manj črnih pikslov. Pri dvodimenzionalni sferi pri dani postavitvi modre krogle še ne vidimo, rdeča pa je precej popačena. Ploskev pod kroglama je nagnjena, zato pri dvodimenzionalni sferi opazimo, da je spodnji žarki ne zadanejo več.
+\begin{figure}[H]
+\centering
+\begin{minipage}{.33\textwidth}
+  \centering
+  \includegraphics[width=1\linewidth]{Images/Euclidean.jpg}
+  \captionof{figure}{Evklidski prostor}
+  \label{fig:2sphRend}
+\end{minipage}%
+\begin{minipage}{.33\textwidth}
+  \centering
+  \includegraphics[width=1\linewidth]{Images/Torus.jpg}
+  \captionof{figure}{Ploščat torus}
+  \label{fig:2sphRays}
+\end{minipage}
+\begin{minipage}{.33\textwidth}
+  \centering
+  \includegraphics[width=1\linewidth]{Images/2Sphere.jpg}
+  \captionof{figure}{Dvodimenzionalna sfera}
+  \label{fig:2sphRays}
+\end{minipage}
+\end{figure}
 
-\begin{itemize}
-\item ne sledi pravilom evklidske geometrije
-\item prostor je ukrivljen (žarki ni nujno, da potujejo naravnost)
-\item koti v trikotniku skupaj več / manj od  180 stopinj
-\end{itemize}
 
 \section{Razdelitev dela}
 \begin{itemize}
@@ -425,5 +474,11 @@ razdelku
   \item Koda je na voljo na spletnem repozitoriju, na \href{https://github.com/MAZI2/Ray-tracing-non-euclidean-spaces}{povezavi}.
   \item Spletna predstavitev pa je na voljo \href{https://docs.google.com/presentation/d/1NP8gkPzV8rE2ToBoUAP4b7w2yMkAWgCmlsRPMn_5Ahc/edit?usp=sharing}{tukaj}.
 \end{itemize}
+\section{Optimizacije}
+Želeli smo si splošen način, kako lahko premikamo žarek skozi katerikoli prostor. Tako smo zasnovali algoritem, ki temelji na iskanju ničle funkcije vsakega posameznega objekta \( o = (x, y, z) \), ko v njo vstavimo pozicijo žarka ob podanem "času" \( t \). Algoritem torej išče parameter \( t \) za katerega velja:
+\[ f = o(s(t)) = 0 \]
+
+Če je v neki točki aproksimacija odvoda \( f \) pozitivna, vemo da se od objekta oddaljujemo. Mogoče smo ga z korakom preskočili, ali pa smo odšli mimo. Razpolovimo korak in ga ponovimo.
+
 \end{document}
 
