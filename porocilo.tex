@@ -112,17 +112,17 @@ Običajni torusi so ukrivljeni in se jim ukrivljenost po površini spreminja. Pl
     \label{Slika:Žarek v dvodimenzionalnem ploščatem torusu}
 \end{figure}
 
-\subsection{Razlaga kode}
+\subsection{Algoritmi za flat torus}
 Ključni vpogled, je da žarek omejimo na domeno. V spodnji funkciji mapToCube je Tn začetni vektor, a je začetek domene, b konec domene.
 \begin{algorithm}[H]
 \caption{Map to Cube}\label{alg:mapToCube}
 \begin{algorithmic}[1]
-\Function{mapToCube}{$Tn$, $a$, $b$} 
+\Function{mapToCube}{$T_{n}$, $a$, $b$} 
     \State $range \gets b - a$
-    \State $q \gets (Tn - a) / range$
-    \State $fr \gets q - \text{floor}(q)$
-    \State $Tnt \gets a + fr \cdot range$
-    \State \Return $Tnt$
+    \State $q \gets (T_{n} - a) / range$
+    \State $fraction \gets q - \text{floor}(q)$
+    \State $T_{n+1} \gets a + fraction \cdot range$
+    \State \Return $T_{n+1}$
 \EndFunction
 \end{algorithmic}
 \end{algorithm}
@@ -169,10 +169,17 @@ Ko program poženemo, dobimo lep vizualni rezultat.
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.5\linewidth]{Images/flat_torus.png}
-    \caption{Rezultat "ray tracinga" za tri dimenzionalni ploščati torus}
+    \caption{Rezultat "ray tracinga" za tri dimenzionalni ploščati torus (10 preslikanj)}
     \label{Slika:Rezultat "ray tracinga" za tri dimenzionalni ploščati torus}
 \end{figure}
-Na sliki lahko opazimo, da so elementi simetrično preslikani, prav tako pa lahko vidimo, da so tudi različno osenčeni.
+Na sliki lahko opazimo, da so elementi simetrično preslikani, prav tako pa lahko vidimo, da so tudi različno osenčeni. Opazmo lahko tudi, veliko "črnine" (void). Črna barva pomeni, da se tam žarki ne sekajo z nobenim objektom. Do tega pride, ker smo na zgornji sliki pustili manj preslikanj (okrog 10), da je bila slika hitreje generirana. Če pa pustimo več preslikanj, recimo 500, pa dobimo sliko, kjer črnine skoraj ni.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{Images/flat_torus_more.png}
+    \caption{Rezultat "ray tracinga" za tri dimenzionalni ploščati torus (500 preslikanj)}
+    \label{Slika:Rezultat "ray tracinga" za tri dimenzionalni ploščati torus}
+\end{figure}
 
 \section{Sledenje žarkom na dvodimenzionalni sferi \(\mathbb{S}^{2}\)}
 Žarek na dvodimenzionalni sferi bo potoval po najravnejši poti, tj. geodetki. Geodetka je krivulja po sferi, kjer zahtevamo, da je
@@ -406,3 +413,4 @@ razdelku
   \item Spletna predstavitev pa je na voljo \href{https://docs.google.com/presentation/d/1NP8gkPzV8rE2ToBoUAP4b7w2yMkAWgCmlsRPMn_5Ahc/edit?usp=sharing}{tukaj}.
 \end{itemize}
 \end{document}
+
