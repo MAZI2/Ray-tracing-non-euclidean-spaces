@@ -52,73 +52,125 @@ omogočena v sferičnem neevklidskem prostoru.
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.5\linewidth]{Images/potovanje_zarkov.png}
-    \caption{Primerjava evklidskega in sferičnega prostora [Vir: G. Kovač]}
-    \label{Slika:Primerjava evklidskega in sferičnega prostora}
+    \caption{Primerjava žarka v evklidskem in sferičnem prostoru [Vir: G. Kovač]}
+    \label{Slika:Primerjava žarkov evklidski, sferični}
 \end{figure}
 
 Kaj pa pravzaprav je neevklidski prostor?
-Neevklidski prostor je preprosto prostor, ki ne sledi pravilom evklidske geometrije. Torej prostor ni raven ampak je ukrivljen, vsota kotov v trikotniku je večja ali pa manjša od 180 stopinj... Neevklidski prostor delimo na več različnih geometrij med katerimi so recimo hiperbolična geometrija, eliptična geometrija, sferična geometrija, projektivna geometrija...
+Neevklidski prostor je preprosto prostor, ki ne sledi postulatom evklidske geometrije. 
+Torej prostor ni raven ampak je ukrivljen, vsota kotov v trikotniku je večja ali pa manjša od 
+180 stopinj... Neevklidski prostor delimo na več različnih geometrij med katerimi so recimo 
+hiperbolična geometrija, eliptična geometrija, sferična geometrija, projektivna geometrija...
 
-\section{Implementacija osnovnega algoritma ray tracing}
+\section{Zasnova projekta in osnovni algoritem sledenja žarkov}
+Želeli smo si način podajanja objektov in prostorov, ki bi bil dovolj splošen da lahko brez
+spreminjanja algoritmov dodamo nove.
+
 \subsection{Objekti v sceni}
-Posamični objekti v prostoru so podani z enačbo v obliki:
-\[ o(x,y,z): \mathbb{R}^3 \to R =0 \]
-Za kroglo s središčem v $(x_{0}, y_{0}, z_{0})$ in polmerom $r$ je to enacba
-\[(x-x_{0})^{2}+(y-y_{0})^{2}+(z-z_{0})^{2}-r^{2}=0 \],
-za ravnino pa enačba 
-\[ ax+by+cz-d = 0 \]
+Posamičen objekt je podan z enačbo, ki sprejme točko v prostoru, in vrne vrednost. 
+Enačba je torej oblike:
+\[ o(x,y,z): \mathbb{R}^3 \to \mathbb{R} = a \]
+Kjer je \(a = 0\) v primeru da je točka na ploskvi objekta, in \( a \neq 0 \) v primeru da 
+je točka v notranjosti, ali zunanjosti objekta.
+Za kroglo s središčem v $(x_{0}, y_{0}, z_{0})$ in polmerom $r$ je to enačba:
+\[(x-x_{0})^{2}+(y-y_{0})^{2}+(z-z_{0})^{2}-r^{2}=0, \]
+Za ravnino z normalo \( \vec{n} = [a, b, c]^T \) in točko na ravnini $(x_{0}, y_{0}, z_{0})$ pa:
+\[ ax+by+cz-(ax_0+by_0+cz_0) = 0. \]
 
 \subsection{Prostori}
-Vsak prostor implementira funkcijo, v obliki
-\[ s(t): \mathbb{R} \to \mathbb{R}^3 = [x, y, z]^T \]
-ki zna žarek podan z točko \(\vec{T}\) in smerjo \(\vec{v}\) premakniti za \(t\) korakov v smeri \(\vec{v}\).
-V primeru evklidskega prostora je to preprosto premikanje za \(t\) korakov v smeri \(\vec{v}\), 
+Vsak prostor implementira funkcijo v obliki:
+\[ s(t, T, \vec{v}): \mathbb{R} \to \mathbb{R}^3 = [x, y, z]^T \]
+ki vrne točko v prostoru, kjer bi bil žarek (ki gre skozi točko \(T\) v smeri \(\vec{v}\)) če 
+ga premaknemo za razdaljo \(t\) po tem prostoru. (oziroma izračuna dovolj dober približek, kot 
+to počne v prostoru 2-Sphere). V primeru evklidskega prostora je to preprosto premik po premici 
+za razdaljo \(t\):
 \[ \vec{T}_{n+1} = \vec{T}_{n} + t \cdot \vec{v} \]
-v 2-Sphere pa $s(t)$ vrača približek. Prostora flat torus in 2-sphere sta podrobneje opisana kasneje.
-
-\subsection{Algoritem}
-Naš program je sposoben upodobiti preprost prizor z osnovnim senčenjem
-po naslednjem postopku
-
 \bigskip
+Prostora flat torus in 2-sphere sta podrobneje opisana kasneje.
+
+\subsection{Generiranje žarkov}
+Žarek je definiran z začetno točko \(T_{0}\) in enotskim vektorjem \(\vec{v}\). Ker smo si želeli, da 
+širino kadra (ang. Field of View) podamo v stopinjah kota ki ga kamera vidi po diagonali kadra(FOV),
+smo enotske vektorje \( v \) generirali po postopku:
+
 \begin{enumerate}
-
-\item Začnemo v točki \( T_{0} \) - pozicija kamere, iz koder pošiljamo žarke v smeri, določene z Field of view (FOV) kamere, ter resolucijo slike. 
-\item V poljubnem prostoru premikamo žarek za nek korak, kjer vsakič preverimo vrednost funkcije \( f \), ki jo vrne vsak objekt.
-\item Če se v neki točki funkciji predznak spremeni, vemo da smo v tem koraku vstopili v objekt. Razpolovimo korak in ga ponovimo.
-\item Postopek razpolavljanja ponavljamo, dokler korak ni manjši kot \( \varepsilon \).
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.5\linewidth]{intersect.png}
-    \caption{Iskanje natančnejšega presečišča}
-    \label{Slika:Iskanje natančnejšega presečišča}
-\end{figure}
-
-\item Žarek od točke presečišča pošljemo v smer luči. Če žarek pride do luči, brez da bi se prej sekal z objektom, je točka osvetljena.
-\item Glede na barvo objekta in ugotovljeno osvetlenost pobarvamo točko na sliki, ki pripada žarku.
+  \item Vsi žarki, imajo začetno točko \(T_{0}\) na poziciji kamere.
+  \item Iz \( FOV \) izračunamo \( FOV_X \) (širino kadra po horizontali), \( FOV_Y \) (širino kadra po vertikali)
+  \item Ker so piksli slike štirikotni, lahko zamik v smeri horizontalni in vertikalni smeri izračunamo kot:
+  \[\Delta x = \Delta y = \frac{FOV_X}{RES_X} \] Kjer je \(RES_X\) širina slike v pikslih.
+  \item Žarke predstavimo kot točke na enotski sferi, ki je usmerjena v smer v katero kaže kamera. Vsak žarek, 
+  ima azimut \[ \theta = -FOV_X/2 + i \cdot \Delta x \] in elevacijo \[ \phi = FOV_Y/2 - j \cdot \Delta x, \]
+  kjer je \( i \) stolpec in \( j \) vrstica slike (šteta po računalničarsko, torej začnemo z 0).
+  \item Enotski vektor \( \vec{v} \) dobimo iz azimuta in elevacije kot:
+  \[ \vec{v} = [ \cos(\theta) \cos(\phi), \sin(\phi), \cos(\theta) \sin(\phi) ]^T \]. Tako vedno dobimo enotski vektor.
 \end{enumerate}
 
-\bigskip
-V nadaljevanju smo implementirali algoritem za sledenje žarku na tridimenzionalnem ploščatem torusu \( \mathbb{T}_{pl}^{3} \) in dvodimenzionalni sferi \( \mathbb{S}^2 \) v \( \mathbb{R}^3 \). Algoritem za sledenje žarku v evklidskem prostoru je enak algoritmu za torus, brez preslikave žarka na željeno domeno. Sledenje v smeri vira svetlobe uporablja algoritem za sledenje žarku v evklidskem prostoru, pri tem pa ga pri korakih dolžine \( h \) omejimo na maksimalno število korakov
-\[ k_{max}= \left \lceil \frac{\left \|\vec{r}_{l}-\vec{r}_{t} \right \|}{h} \right \rceil \]
-kjer je \( \vec{r}_{l} \) krajevni vektor vira svetlobe, \( \vec{r}_{t} \) pa krajevni vektor točke presečišča.
+\subsection{Sledenje žarkom}
+Osnovni algoritem sledenja žarkov je sledeč:
 
-\section{\texorpdfstring{Sledenje žarkom na ploščatem torusu \( \mathbb{T}_{pl}^{3} \)}{Sledenje žarkom na ploščatem torusu}}
+\begin{enumerate}
+\item V poljubnem prostoru premikamo žarek z pomočjo enačbe \( s(t) = [x, y, z]^T \) za korak velikosti \( t = t_0 \).
+\item Za vsak objekt, z pomočjo njegove enačbe \( o(x, y, z) = a \) preverimo, če je žarek prešel skozi ploskev 
+objekta (če je \( a \) spremenil predznak).
+\item Če je za nek objekt \( a \) spremenil predznak, razpolovimo korak \( t = t/2 \) in ponovimo korak.
+\item Postopek razpolavljanja ponavljamo, dokler korak ni manjši kot nek \( \varepsilon \).
+\end{enumerate}
 
-\subsection{Kaj je tri dimenzionalni ploščati torus?}
-Tri dimenzionalni ploščati torus \( \mathbb{T}^3_{pl} \), je tridimenzionalna mnogoterost v evklidski geometriji. \( \mathbb{T}^3_{pl} \) dobimo tako, da "zlepimo" nasprotne ploskve enotske kocke \([0,1] \times [0,1] \times [0,1] \subset \mathbb{R}^3 \), kjer je \(\mathbb{R}^3\) tridimenzionalni evklidski prostor. Formalno pravimo, da je \( \mathbb{T}^3_{pl} \) kvocient \(\mathbb{R}^3\) z grupo translacij:
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.5\linewidth]{intersect.png}
+  \caption{Iskanje natančnejšega presečišča}
+  \label{Slika:Iskanje natančnejšega presečišča}
+\end{figure}
+
+\subsection{Računanje barve piksla}
+Vsak žarek ki gre iz kamere, mora kameri povedati, z objektom katere barve se je zaletel. Če pa bi ji povedal
+samo to, v sceni nebi imeli nobenega senčenja. Za sence se moramo še nekoliko dodatno potruditi:
+\begin{enumerate}
+  \item Poiščemo vektor, ki gre v smeri od presečišča žarka z sceno do luči: 
+  \[ \vec{v} = \frac{\vec{r}_{l} - \vec{r}_{p}}{||\vec{r}_{l} - \vec{r}_{p}||} \]
+  Kjer je \( \vec{r}_{l} \) krajevni vektor luči, \( \vec{r}_{p} \) pa krajevni vektor presečišča.
+  \item Če žarek, ki se začne v točki presečišča in gre v smeri \( v \) seka še kakšen objekt preden 
+  (vključno z objektom, ki ga je že zadel) preden prepotuje razdaljo do luči 
+  \( d = ||\vec{r}_{l} - \vec{r}_{p}||\), potem je presečišče v senci.
+\end{enumerate}
+
+
+\section{Evklidski prostor in potovanje žarka do luči}
+
+V evklidskem prostoru, je potovanje žarkov preprosto premik po premici: 
+\[ \vec{T}_{n+1} = \vec{T}_{n} + t \cdot \vec{v} \]
+Žarki potujejo naravnost, kot smo navajeni. Algoritem sledenja žarkov je popolnoma identičen
+kot v primeru flat torusa, le da žarkov ni potrebno preslikati. 
+
+Odločili smo se, da bodo žarki od presečišča z objektom do luči potovali kar po evklidskem prostoru. 
+To odločitev smo sprejeli, ker bi bilo v neevklidskih prostorih zelo težko implementirati algoritem, 
+ki žarek pošlje po vseh poteh ki vodijo do vsaj ene luči, tako da bi se morali zadovoljiti z algoritmom 
+ki žarke pošilja v razne smeri in upa, da bo vsaj en žarek prišel do luči, če pot do nje obstaja. 
+Implementacija tega predstavlja izboljšavo, ki bi jo lahko dodali v prihodnosti.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\linewidth]{Images/Euclidean_blaz.png}
+  \caption{Euklidski prostor}
+  \label{Slika:Euklidski prostor}
+\end{figure}
+
+\section{\texorpdfstring{Sledenje žarkom na flat torusu \( \mathbb{T}_{pl}^{3} \)}{Sledenje žarkom na flat torusu}}
+
+\subsection{Kaj je tri dimenzionalni flat torus?}
+Tri dimenzionalni flat torus \( \mathbb{T}^3_{pl} \) je prostor, ki ga dobimo tako, da "zlepimo" nasprotne ploskve enotske kocke \([0,1] \times [0,1] \times [0,1] \subset \mathbb{R}^3 \), kjer je \(\mathbb{R}^3\) tridimenzionalni evklidski prostor. Formalno pravimo, da je \( \mathbb{T}^3_{pl} \) kvocient \(\mathbb{R}^3\) z grupo translacij:
 \[
 (x, y, z) \to (x \pm 1, y, z), \quad (x, y, z) \to (x, y \pm 1, z), \quad (x, y, z) \to (x, y, z \pm 1).
 \]
 
-Običajni torusi so ukrivljeni in se jim ukrivljenost po površini spreminja. Ploščati torus pa ima konstantno ukrivljenost v vsaki točki. Poimenovanje ploščat izhaja iz tega, ker je povsod podoben navadni evklidski ravnini. Podobno velja za tridimenzionalni ploščati torus, kjer pri sledenju žarka lahko uporabimo kar osnovno definicijo žarka. Ključna razlika med algoritmom v \( \mathbb{R}^3 \) in \( \mathbb{T}^3_{pl} \) pa je, da bomo tokrat dodali še en korak, ker moramo žarek omejiti na kocko. Dokler se nahajamo znotraj njenih meja, ne naredimo nobenih popravkov. Ko pa ugotovimo presečišče z eno od ploskev, moramo žarek preslikati na nasprotno ploskev. To lahko storimo tako, da preprosto žarek omejimo znotraj domene, izračunamo presežek in ga prištejemo začetku domene.
+Običajni torusi so ukrivljeni in se jim ukrivljenost po površini spreminja. Flat torus pa ima konstantno ukrivljenost v vsaki točki. Poimenovanje flat izhaja iz tega, ker je povsod podoben navadni evklidski ravnini. Podobno velja za tridimenzionalni flat torus, kjer pri sledenju žarka lahko uporabimo kar osnovno definicijo žarka. Ključna razlika med algoritmom v \( \mathbb{R}^3 \) in \( \mathbb{T}^3_{pl} \) pa je, da bomo tokrat dodali še en korak, ker moramo žarek omejiti na kocko. Dokler se nahajamo znotraj njenih meja, ne naredimo nobenih popravkov. Ko pa ugotovimo presečišče z eno od ploskev, moramo žarek preslikati na nasprotno ploskev. To lahko storimo tako, da preprosto žarek omejimo znotraj domene, izračunamo presežek in ga prištejemo začetku domene.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.5\linewidth]{Images/flat_torus_zrcaljenje.png}
-    \caption{Žarek v dvodimenzionalnem ploščatem torusu}
-    \label{Slika:Žarek v dvodimenzionalnem ploščatem torusu}
+    \caption{Žarek v dvodimenzionalnem flat torusu}
+    \label{Slika:Žarek v dvodimenzionalnem flat torusu}
 \end{figure}
 \subsection{Algoritmi za flat torus}
 Ključni vpogled, je da žarek omejimo na domeno. V spodnji funkciji mapToCube je $T_{n}$ začetni vektor, a je začetek domene, b konec domene.
@@ -138,7 +190,7 @@ Ključni vpogled, je da žarek omejimo na domeno. V spodnji funkciji mapToCube j
 Funkcija \textbf{traceRayFlatTorus} sprejme začetno točko $T_{0}$, smer $\vec{v}$, korak step, maksimalno število iteracij maxIt, množico objektov objects in meje $a$ in $b$ domene na katero bomo preslikovali koordinate žarka.
 Pomožni funkciji \textbf{signs} in \textbf{checkIntersect} implementirata funkcije objektov \( o(x,y,z) \).
 \begin{algorithm}[H]
-    \caption{Sledenje žarku na ploščatem torusu}
+    \caption{Sledenje žarku na flat torusu}
 \begin{algorithmic}
     \Function{traceRayFlatTorus}{$T_{0}$, $\vec{v}$, step, maxIt, objects, a, b, $\varepsilon$}
 
@@ -180,18 +232,17 @@ Pomožni funkciji \textbf{signs} in \textbf{checkIntersect} implementirata funkc
 Ko program poženemo, dobimo lep vizualni rezultat.
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\linewidth]{Images/flat_torus.png}
-    \caption{Rezultat "ray tracinga" za tri dimenzionalni ploščati torus (10 preslikanj)}
-    \label{Slika:Rezultat "ray tracinga" za tri dimenzionalni ploščati torus 1}
+    \includegraphics[width=0.7\linewidth]{Images/flat_torus_blaz.png}
+    \caption{Rezultat "ray tracinga" za tri dimenzionalni flat torus (10 preslikanj)}
+    \label{Slika:Rezultat "ray tracinga" za tri dimenzionalni flat torus 1}
 \end{figure}
-Na sliki lahko opazimo, da so elementi simetrično preslikani, prav tako pa lahko vidimo, da so tudi različno osenčeni. Opazmo lahko tudi, veliko "črnine" (void). Črna barva pomeni, da se tam žarki ne sekajo z nobenim objektom. Do tega pride, ker smo na zgornji sliki pustili manj preslikanj (okrog 10), da je bila slika hitreje generirana. Če pa pustimo več preslikanj, recimo 500, pa dobimo sliko, kjer črnine skoraj ni.
+Na sliki lahko opazimo podoben efekt tistemu v hišah iluzij, ko smo v sobi polni ogledal. Razlika je v tem, 
+da se tu žarki ne odbijejo, temceč "teleportirajo" na drugo stran scene, zato slika ni simetrična. Na levi 
+lahko opazujemo sveno kot bi zgledala če bi jo gledali bolj z desne, na desni pa kot da bi jo gledali z leve.
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.5\linewidth]{Images/flat_torus_more.png}
-    \caption{Rezultat "ray tracinga" za tri dimenzionalni ploščati torus (500 preslikanj)}
-    \label{Slika:Rezultat "ray tracinga" za tri dimenzionalni ploščati torus 2}
-\end{figure}
+Izrišejo se tudi distinktne črte, nekatere izmed njih so celo črne. Nekateri žarki ki so kljub velikemu številu preslikavanj
+(v tem primeru 500) še vseeno črni, se nebodo nikoli srečali z objektom ker grejo v smer ki je povsem vzporedna
+z objekti v "sosednjih" scenah.
 
 \section{\texorpdfstring{Sledenje žarkom na dvodimenzionalni sferi \( \mathbb{S}^2 \)}{Sledenje žarkom na dvodimenzionalni sferi}}
 Žarek na dvodimenzionalni sferi bo potoval po najravnejši poti, tj. geodetki. Geodetka je krivulja po sferi, kjer zahtevamo, da je
@@ -412,7 +463,6 @@ vir svetlobe "skrit" za eno izmed krogel. Na \hyperref[fig:2sphRays]{sliki žark
 \end{figure}
 
 \bigskip
-\newline
 Če bi spremljali generirane slike ob premikanju kamere, bi videli, da objekti ki so naravnost pred nami pogosto v sliko vstopajo od zgoraj, kar je prav tako pričakovano. Zgornji žarki, bodo imeli namreč najdaljši doseg, saj je središče njihove sfere premaknjeno najdlje stran od kamere v smeri premikanja. Na \hyperref[fig:sequence]{sekvenci slik} se mimo rdeče krogle premikamo modri krogli, ki je v celoti osvetljena. V ozadju vidimo oranžno ravnino.
 \begin{figure}[H]
     \centering
@@ -433,23 +483,23 @@ Primerjamo enako pozicijo kamere in enako postavitev objektov v prostoru v evkli
 na \hyperref[fig:2sphRays2]{sliki 11}. Za razliko od evklidskega prostora pri torusu opazimo podvojene objekte, kjer pričakujemo, da bi z večjim številom korakov bilo čedalje manj črnih pikslov. Pri dvodimenzionalni sferi pri dani postavitvi modre krogle še ne vidimo, rdeča pa je precej popačena. Ploskev pod kroglama je nagnjena, zato pri dvodimenzionalni sferi opazimo, da je spodnji žarki ne zadanejo več.
 \begin{figure}[H]
 \centering
-\begin{minipage}{.33\textwidth}
+\begin{minipage}[t]{.33\textwidth}
   \centering
   \includegraphics[width=1\linewidth]{Images/Euclidean.jpg}
   \captionof{figure}{Evklidski prostor}
-  \label{fig:2sphRend}
+  \label{fig:Evklidski prostor render}
 \end{minipage}%
-\begin{minipage}{.33\textwidth}
+\begin{minipage}[t]{.33\textwidth}
   \centering
   \includegraphics[width=1\linewidth]{Images/Torus.jpg}
-  \captionof{figure}{Ploščat torus}
-  \label{fig:2sphRays}
+  \captionof{figure}{flat torus}
+  \label{fig:Flat torus render}
 \end{minipage}
-\begin{minipage}{.33\textwidth}
+\begin{minipage}[t]{.33\textwidth}
   \centering
   \includegraphics[width=1\linewidth]{Images/2Sphere.jpg}
   \captionof{figure}{Dvodimenzionalna sfera}
-  \label{fig:2sphRays}
+  \label{fig:2Sphere render}
 \end{minipage}
 \end{figure}
 

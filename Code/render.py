@@ -32,13 +32,19 @@ class _RendererWorker:
 
         # For each pixel in the column
         for j in range(res_y):
-            ray_direction_vec = vector_uvw.degrees_to_vector(ray_direction_deg)
+            true_ray_direction_deg = [ray_direction_deg[0]/np.cos(np.radians(ray_direction_deg[1])), ray_direction_deg[1]]
+            ray_direction_vec = vector_uvw.degrees_to_vector(true_ray_direction_deg)
             ray = Ray(ray_origin, ray_direction_vec, ray_direction_deg)
             
             image[j] = self._trace_ray(ray, objects, lights, space, background_color)
 
             # Obrnem ray
             ray_direction_deg[1] -= kot_step
+            # if ray_direction_deg[1] < -90:
+            #     odmik = ray_direction_deg[1] + 90
+            #     ray_direction_deg[1] = -90 - odmik
+            #     ray_direction_deg[0] += 180 if ray_direction_deg[0] < 0 else -180
+            #     kot_step = -kot_step
         
         self.logger.debug(f"Column {column_num} rendered.")
 

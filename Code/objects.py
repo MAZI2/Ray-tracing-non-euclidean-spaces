@@ -26,11 +26,11 @@ class _SceneObject:
 
         self.logger = Logger.setup_logger("_SceneObject")
     
-    def move(self, x: float = 0, y: float = 0, z: float = 0, 
+    def move(self, x: float = None, y: float = None, z: float = None, 
              dx: float = 0, dy: float = 0, dz: float = 0):
-        self.x = x if not dx else self.x + dx # Tko sm napisu da da dx prednost če se zatipkaš
-        self.y = y if not dy else self.y + dy
-        self.z = z if not dz else self.z + dz
+        self.x = x if x else self.x + dx # Tko sm napisu da da dx prednost če se zatipkaš
+        self.y = y if y else self.y + dy
+        self.z = z if z else self.z + dz
     
     def rotate(self, u: float = 0, v: float = 0, w: float = 0, 
                du: float = 0, dv: float = 0, dw: float = 0):
