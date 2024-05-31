@@ -27,21 +27,33 @@
 \newpage
 
 \section{Uvod}
-Algoritem sledenja žarku (\textit{ang. Ray Tracing}) je priljubljen algoritem, uporabljen v računalniški grafiki, ki simulira realistično osvetlitev prizorov. Temelji na ideji sledenja žarka svetlobe po prizoru, izračunavanju njegovega preseka z objekti in odbijanju v drugo smer. Običajno ta algoritem uporabljamo v običajnem evklidskem prostoru, saj predstavlja resnični svet. Vendar pa lahko algoritem implementiramo tudi v drugih (neevklidskih) prostorih, da dobimo zanimive vizualne rezultate. To bo glavna naloga tega projekta.
+Algoritem sledenja žarku (\textit{ang. Ray Tracing}) je priljubljen algoritem, uporabljen v 
+računalniški grafiki, ki simulira realistično osvetlitev prizorov. Temelji na ideji sledenja 
+žarka svetlobe po prizoru, izračunavanju njegovega preseka z objekti in odbijanju v drugo smer. 
+Običajno ta algoritem uporabljamo v običajnem evklidskem prostoru, saj predstavlja resnični svet. 
+Vendar pa lahko algoritem implementiramo tudi v drugih (neevklidskih) prostorih, da dobimo 
+zanimive vizualne rezultate. To bo glavna naloga tega projekta.
 
 \section{Cilji}
-Cilji za to projektno nalogo so implementacija "osnovnega" algoritma sledenje žarkom v evklidskem prostoru, njegova nadgradnja, da deluje tudi v neevklidskem prostoru na ploščatem torusu in 2-sferi ter primerjava delovanja v evklidskem in neevklidskem prostoru.
-
+Cilj za projektno nalogo, nam je bil narediti program, v katerem uporabnik lahko eksperimentira 
+kako zgledajo (kako potujejo žarki) v prostorih ki niso evklidski, in primerjavo teh prostorov z 
+evklidskim prostorom. Želeli smo si, da bi bilo dodajanje novih prostorov in novih objektov kar 
+se le da enostavno in da na slike nebi bilo potrebno dolgo čakati.
 \section{Sledenje žarkom}
-Predstavljajmo si, da smo na plaži v naši najljubši obalni turistični destinaciji in gledamo, kako bližnja barka pluje v sončni zahod. Nam, na obali, zgleda, da se poleg oddaljevanja tudi "pogreza" v tla. Zakaj pa je temu tako? 
+Predstavljajte si, da ste na vaši najljubši plaži, ki ima razgled na ocean. Ko se ozrete na barko,
+ki potuje proti sončnemu zahodu, boste poleg tega da se barka oddaljuje opazili tudi, da se "pogreza" 
+v tla.
 
-To je ravno zaradi potovanja žarkov. Ker smo v evklidskem prostoru, bo žarek potoval naravnost in nas zaradi ukrivljenosti Zemlje tako, po določeni razdalji, ne bo več dosegel. Sedaj, pa si predstavljajmo, da bi lahko barko kljub oddaljevanju še vedno videli celotno. Ta posebna zmožnost, bi nam bila omogočena v neevklidskem prostoru. In sicer še bolj natančno, v sferičnem neevklidskem prostoru.
+To je ravno zaradi potovanja žarkov. Ker smo v evklidskem prostoru, bo žarek potoval naravnost in nas 
+zaradi ukrivljenosti Zemlje tako, po določeni razdalji, ne bo več dosegel. Sedaj, pa si predstavljajmo, 
+da bi lahko barko kljub oddaljevanju še vedno videli celotno. Ta posebna zmožnost, bi nam bila 
+omogočena v sferičnem neevklidskem prostoru.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.5\linewidth]{Images/potovanje_zarkov.png}
-    \caption{Primerjava [Vir: G. Kovač]}
-    \label{Slika:Primerjava}
+    \caption{Primerjava evklidskega in sferičnega prostora [Vir: G. Kovač]}
+    \label{Slika:Primerjava evklidskega in sferičnega prostora}
 \end{figure}
 
 Kaj pa pravzaprav je neevklidski prostor?
@@ -96,7 +108,8 @@ V nadaljevanju smo implementirali algoritem za sledenje žarku na tridimenzional
 \[ k_{max}= \left \lceil \frac{\left \|\vec{r}_{l}-\vec{r}_{t} \right \|}{h} \right \rceil \]
 kjer je \( \vec{r}_{l} \) krajevni vektor vira svetlobe, \( \vec{r}_{t} \) pa krajevni vektor točke presečišča.
 
-\section{Sledenje žarkom na ploščatem torusu \(\mathbb{T}_{pl}^{3}\)} 
+\section{\texorpdfstring{Sledenje žarkom na ploščatem torusu \( \mathbb{T}_{pl}^{3} \)}{Sledenje žarkom na ploščatem torusu}}
+
 \subsection{Kaj je tri dimenzionalni ploščati torus?}
 Tri dimenzionalni ploščati torus \( \mathbb{T}^3_{pl} \), je tridimenzionalna mnogoterost v evklidski geometriji. \( \mathbb{T}^3_{pl} \) dobimo tako, da "zlepimo" nasprotne ploskve enotske kocke \([0,1] \times [0,1] \times [0,1] \subset \mathbb{R}^3 \), kjer je \(\mathbb{R}^3\) tridimenzionalni evklidski prostor. Formalno pravimo, da je \( \mathbb{T}^3_{pl} \) kvocient \(\mathbb{R}^3\) z grupo translacij:
 \[
@@ -170,7 +183,7 @@ Ko program poženemo, dobimo lep vizualni rezultat.
     \centering
     \includegraphics[width=0.5\linewidth]{Images/flat_torus.png}
     \caption{Rezultat "ray tracinga" za tri dimenzionalni ploščati torus (10 preslikanj)}
-    \label{Slika:Rezultat "ray tracinga" za tri dimenzionalni ploščati torus}
+    \label{Slika:Rezultat "ray tracinga" za tri dimenzionalni ploščati torus 1}
 \end{figure}
 Na sliki lahko opazimo, da so elementi simetrično preslikani, prav tako pa lahko vidimo, da so tudi različno osenčeni. Opazmo lahko tudi, veliko "črnine" (void). Črna barva pomeni, da se tam žarki ne sekajo z nobenim objektom. Do tega pride, ker smo na zgornji sliki pustili manj preslikanj (okrog 10), da je bila slika hitreje generirana. Če pa pustimo več preslikanj, recimo 500, pa dobimo sliko, kjer črnine skoraj ni.
 
@@ -178,10 +191,10 @@ Na sliki lahko opazimo, da so elementi simetrično preslikani, prav tako pa lahk
     \centering
     \includegraphics[width=0.5\linewidth]{Images/flat_torus_more.png}
     \caption{Rezultat "ray tracinga" za tri dimenzionalni ploščati torus (500 preslikanj)}
-    \label{Slika:Rezultat "ray tracinga" za tri dimenzionalni ploščati torus}
+    \label{Slika:Rezultat "ray tracinga" za tri dimenzionalni ploščati torus 2}
 \end{figure}
 
-\section{Sledenje žarkom na dvodimenzionalni sferi \(\mathbb{S}^{2}\)}
+\section{\texorpdfstring{Sledenje žarkom na dvodimenzionalni sferi \( \mathbb{S}^2 \)}{Sledenje žarkom na dvodimenzionalni sferi}}
 Žarek na dvodimenzionalni sferi bo potoval po najravnejši poti, tj. geodetki. Geodetka je krivulja po sferi, kjer zahtevamo, da je
 pospešek v smeri normale tangentne ravnine 0. Majhen korak po geodetki je v \( uv \) ravnini opisan s sistemom dveh diferencialnih enačb drugega reda.
 \begin{equation}
