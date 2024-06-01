@@ -30,14 +30,14 @@
 Algoritem sledenja žarku (\textit{ang. Ray Tracing}) je priljubljen algoritem, uporabljen v 
 računalniški grafiki, ki simulira realistično osvetlitev prizorov. Temelji na ideji sledenja 
 žarka svetlobe po prizoru, izračunavanju njegovega preseka z objekti in odbijanju v drugo smer. 
-Običajno ta algoritem uporabljamo v običajnem evklidskem prostoru, saj predstavlja resnični svet. 
+Običajno ta algoritem uporabljamo v evklidskem prostoru, saj ta predstavlja resnični svet. 
 Vendar pa lahko algoritem implementiramo tudi v drugih (neevklidskih) prostorih, da dobimo 
 zanimive vizualne rezultate. To bo glavna naloga tega projekta.
 
 \section{Cilji}
-Cilj za projektno nalogo, nam je bil narediti program, v katerem se vsak uporabnik (tudi tak 
-ki ne pozna izvorne kode) lahko vidi razliko med različnimi prostori ki niso evklidski, in 
-jih primerja z evklidskim prostorom. Želeli smo si, da bi bilo dodajanje novih prostorov in 
+Cilj za projektno nalogo, nam je bil narediti program, v katerem se vsak uporabnik (tudi tak, ki 
+ne pozna izvorne kode) lahko vidi razliko med različnimi prostori ki niso evklidski, in 
+jih primerja z evklidskim. Želeli smo si, da bi bilo dodajanje novih prostorov in 
 novih objektov kar se le da enostavno in da na slike nebi bilo potrebno dolgo čakati.
 
 
@@ -47,8 +47,8 @@ ki potuje proti sončnemu zahodu, boste poleg tega da se barka oddaljuje opazili
 v tla.
 
 To je ravno zaradi potovanja žarkov. Ker smo v evklidskem prostoru, bo žarek potoval naravnost in nas 
-zaradi ukrivljenosti Zemlje tako, po določeni razdalji, ne bo več dosegel. Sedaj, pa si predstavljajmo, 
-da bi lahko barko kljub oddaljevanju še vedno videli celotno. Ta posebna zmožnost, bi nam bila 
+zaradi ukrivljenosti Zemlje po določeni razdalji ne bo več dosegel. Sedaj pa si predstavljajmo, 
+da bi lahko barko kljub oddaljevanju še vedno videli celotno. Ta posebna zmožnost bi nam bila 
 omogočena v sferičnem neevklidskem prostoru.
 
 \begin{figure}[H]
@@ -58,61 +58,59 @@ omogočena v sferičnem neevklidskem prostoru.
     \label{Slika:Primerjava žarkov evklidski, sferični}
 \end{figure}
 
-Kaj pa pravzaprav je neevklidski prostor?
-Neevklidski prostor je preprosto prostor, ki ne sledi postulatom evklidske geometrije. 
+Kaj pa pravzaprav je neevklidski prostor? To je prostor, ki ne sledi postulatom evklidske geometrije. 
 Torej prostor ni raven ampak je ukrivljen, vsota kotov v trikotniku je večja ali pa manjša od 
-180 stopinj... Neevklidski prostor delimo na več različnih geometrij med katerimi so recimo 
-hiperbolična geometrija, eliptična geometrija, sferična geometrija, projektivna geometrija...
+180 stopinj. Neevklidski prostor delimo na več različnih geometrij med katerimi so 
+hiperbolična geometrija, eliptična geometrija, sferična geometrija, projektivna geometrija itd.
 
 \section{Zasnova projekta in osnovni algoritem sledenja žarkov}
-Želeli smo si način podajanja objektov in prostorov, ki bi bil dovolj splošen da lahko brez
+Želeli smo si načina podajanja objektov in prostorov, ki bi bil dovolj splošen, da lahko brez
 spreminjanja algoritmov dodamo nove.
 
 \subsection{Objekti v sceni}
-Posamičen objekt je podan z enačbo, ki sprejme točko v prostoru, in vrne vrednost. 
-Enačba je torej oblike:
+Posamičen objekt je podan z enačbo, ki sprejme točko v prostoru in vrne vrednost. 
+Enačba je torej oblike
 \[ o(x,y,z): \mathbb{R}^3 \to \mathbb{R} = a \]
-Kjer je \(a = 0\) v primeru da je točka na ploskvi objekta, in \( a \neq 0 \) v primeru da 
-je točka v notranjosti, ali zunanjosti objekta.
-Za kroglo s središčem v $(x_{0}, y_{0}, z_{0})$ in polmerom $r$ je to enačba:
+kjer je \(a = 0\) v primeru, da je točka na ploskvi objekta in \( a \neq 0 \) v primeru, da 
+je točka v notranjosti ali zunanjosti objekta.
+Za kroglo s središčem v $(x_{0}, y_{0}, z_{0})$ in polmerom $r$ je to enačba
 \[(x-x_{0})^{2}+(y-y_{0})^{2}+(z-z_{0})^{2}-r^{2}=0, \]
 Za ravnino z normalo \( \vec{n} = [a, b, c]^T \) in točko na ravnini $(x_{0}, y_{0}, z_{0})$ pa:
 \[ ax+by+cz-(ax_0+by_0+cz_0) = 0. \]
 
 \subsection{Prostori}
-Vsak prostor implementira funkcijo v obliki:
-\[ s(t, T, \vec{v}): \mathbb{R} \to \mathbb{R}^3 = [x, y, z]^T \]
-ki vrne točko v prostoru, kjer bi bil žarek (ki gre skozi točko \(T\) v smeri \(\vec{v}\)) če 
-ga premaknemo za razdaljo \(t\) po tem prostoru. (oziroma izračuna dovolj dober približek, kot 
-to počne v prostoru 2-Sphere). V primeru evklidskega prostora je to preprosto premik po premici 
-za razdaljo \(t\):
+Vsak prostor implementira funkcijo v obliki
+\[ s(t, T, \vec{v}): \mathbb{R} \to \mathbb{R}^3 = [x, y, z]^T \],
+ki vrne točko v prostoru, kjer bi bil žarek, ki gre skozi točko \(T\) v smeri \(\vec{v}\), če 
+ga premaknemo za razdaljo \(t\) po tem prostoru. V prostoru 2-Sphere funkcija računa približek, v primeru evklidskega prostora pa je to 
+preprosto premik po premici za razdaljo \(t\)
 \[ \vec{T}_{n+1} = \vec{T}_{n} + t \cdot \vec{v} \]
 \bigskip
 Prostora flat torus in 2-sphere sta podrobneje opisana kasneje.
 
 \subsection{Generiranje žarkov}
 Žarek je definiran z začetno točko \(T_{0}\) in enotskim vektorjem \(\vec{v}\). Ker smo si želeli, da 
-širino kadra (ang. Field of View) podamo v stopinjah kota ki ga kamera vidi po diagonali kadra(FOV),
+širino kadra (ang. Field of View) podamo v stopinjah kota, ki ga kamera vidi po diagonali kadra,
 smo enotske vektorje \( v \) generirali po postopku:
 
 \begin{enumerate}
-  \item Vsi žarki, imajo začetno točko \(T_{0}\) na poziciji kamere.
+  \item Vsi žarki, imajo začetno točko \(T_{0}\) na poziciji kamere
   \item Iz \( FOV \) izračunamo \( FOV_X \) (širino kadra po horizontali), \( FOV_Y \) (širino kadra po vertikali)
   \item Ker so piksli slike štirikotni, lahko zamik v smeri horizontalni in vertikalni smeri izračunamo kot:
-  \[\Delta x = \Delta y = \frac{FOV_X}{RES_X} \] Kjer je \(RES_X\) širina slike v pikslih.
+  \[\Delta x = \Delta y = \frac{FOV_X}{RES_X} \] kjer je \(RES_X\) širina slike v pikslih.
   \item Žarke predstavimo kot točke na enotski sferi, ki je usmerjena v smer v katero kaže kamera. Vsak žarek, 
   ima azimut \[ \theta = -FOV_X/2 + i \cdot \Delta x \] in elevacijo \[ \phi = FOV_Y/2 - j \cdot \Delta x, \]
   kjer je \( i \) stolpec in \( j \) vrstica slike (šteta po računalničarsko, torej začnemo z 0).
   \item Korektiramo distorcijo žarkov, ki se pojavi, ker sta točki na enotski sferi, ko je \( \phi \) blizu 0 in 
-  rotiramo \(\theta += \Delta x \) veliko bolj oddaljeni, kot ko je \( \phi \) blizu \( \pi/2 \) 
+  rotiramo \(\theta =\theta + \Delta x \) veliko bolj oddaljeni, kot ko je \( \phi \) blizu \( \pi/2 \) 
   (kjer bi za vsak \( \theta \) dobili enako točko) \[ \phi_{true} = \phi \cdot cos(\theta) \]
   \item Enotski vektor \( \vec{v} \) dobimo iz azimuta in elevacije kot:
   \[ \vec{v} = [ \cos(\theta) \cos(\phi), \sin(\phi), \cos(\theta) \sin(\phi) ]^T \]
   \item Vektor \(v\) s pomočjo ortogonalnih matrik rotiramo v smer kamere.
 \end{enumerate}
-Postopek se zdi kar zapleten, vendar je proizvedel bolj natančne rezultate kot druge metode (npr. mreža točk 
-za piksle nekoliko pred kamero, kjer za vsak piksel generiraš žarek med kamero in točko na mreži), ko 
-kamera ne gleda naravnost. Omogoča nam tudi določanje širine kadra v stopinjah, kar je zelo uporabno.
+Postopek se zdi kar zapleten, vendar je proizvedel bolj natančne rezultate kot druge metode, ko 
+kamera ne gleda naravnost, npr. mreža točk za piksle nekoliko pred kamero, kjer za vsak piksel generiramo žarek 
+med kamero in točko na mreži. Omogoča nam tudi določanje širine kadra v stopinjah, kar je zelo uporabno.
 
 \begin{figure}[H]
   \centering
@@ -135,18 +133,18 @@ prikazana slika, ki ne upošteva popravka za distorzijo (korak 5), na desni pa j
 
 Opazimo lahko, da so horizontalne črte na desni sliki dejansko horizontalne, medtem ko so na levi sliki 
 ukrivljene. Ker je kader usmerjen za 10 stopinj navzgor, se vertikalne črte na robovih ukrivijo navznoter, 
-kar je pojav ki se zgodi tudi na pravih kamerah.
+kar je pojav, ki se zgodi tudi na pravih kamerah.
 
 
 \subsection{Sledenje žarkom}
 Osnovni algoritem sledenja žarkov je sledeč:
 
 \begin{enumerate}
-\item V poljubnem prostoru premikamo žarek z pomočjo enačbe \( s(t) = [x, y, z]^T \) za korak velikosti \( t = t_0 \).
-\item Za vsak objekt, z pomočjo njegove enačbe \( o(x, y, z) = a \) preverimo, če je žarek prešel skozi ploskev 
+\item V poljubnem prostoru premikamo žarek s pomočjo enačbe \( s(t) = [x, y, z]^T \) za korak velikosti $h$.
+\item Za vsak objekt, s pomočjo njegove enačbe \( o(x, y, z) = a \) preverimo, če je žarek prešel skozi ploskev 
 objekta (če je \( a \) spremenil predznak).
-\item Če je za nek objekt \( a \) spremenil predznak, razpolovimo korak \( t = t/2 \) in ponovimo korak.
-\item Postopek razpolavljanja ponavljamo, dokler korak ni manjši kot nek \( \varepsilon \).
+\item Če je za nek objekt \( a \) spremenil predznak, razpolovimo korak \( h = h/2 \) in ponovimo korak.
+\item Postopek razpolavljanja ponavljamo, dokler korak ni manjši od \( \varepsilon \).
 \end{enumerate}
 
 \begin{figure}[H]
@@ -157,39 +155,39 @@ objekta (če je \( a \) spremenil predznak).
 \end{figure}
 
 \subsection{Računanje barve piksla}
-Vsak žarek ki gre iz kamere, mora kameri povedati, z objektom katere barve se je zaletel. Če pa bi ji povedal
-samo to, v sceni nebi imeli nobenega senčenja. Za sence se moramo še nekoliko dodatno potruditi:
+Vsak žarek obarvamo z barvo objekta s katerim se je sekal, oziroma črno, če se ni z nobenim. Za senčenje moramo
+poslati še en žarek od presečišča proti luči. 
 \begin{enumerate}
-  \item Poiščemo vektor, ki gre v smeri od presečišča žarka z sceno do luči: 
+  \item Poiščemo vektor, ki gre v smeri od presečišča do luči: 
   \[ \vec{v} = \frac{\vec{r}_{l} - \vec{r}_{p}}{||\vec{r}_{l} - \vec{r}_{p}||} \]
   Kjer je \( \vec{r}_{l} \) krajevni vektor luči, \( \vec{r}_{p} \) pa krajevni vektor presečišča.
-  \item Če žarek, ki se začne v točki presečišča in gre v smeri \( v \) seka še kakšen objekt preden 
-  (vključno z objektom, ki ga je že zadel) preden prepotuje razdaljo do luči 
+\item Če žarek, ki se začne v točki presečišča in gre v smeri \( \vec{v} \), seka kakšen objekt preden 
+    prepotuje razdaljo do luči 
   \( d = ||\vec{r}_{l} - \vec{r}_{p}||\), potem je presečišče v senci.
 \end{enumerate}
 
 
 \section{Evklidski prostor in potovanje žarka do luči}
 
-V evklidskem prostoru, je potovanje žarkov preprosto premik po premici: 
+V evklidskem prostoru je potovanje žarkov preprosto premik po premici: 
 \[ \vec{T}_{n+1} = \vec{T}_{n} + t \cdot \vec{v} \]
-Žarki potujejo naravnost, kot smo navajeni. Algoritem sledenja žarkov je popolnoma identičen
-kot v primeru flat torusa, le da žarkov ni potrebno preslikati. 
+Žarki potujejo naravnost, kot smo navajeni. Algoritem sledenja žarkov je enak 
+kot v primeru ploščatega torusa, le da žarkov ni potrebno preslikati. 
 
 Odločili smo se, da bodo žarki od presečišča z objektom do luči potovali kar po evklidskem prostoru. 
 To odločitev smo sprejeli, ker bi bilo v neevklidskih prostorih zelo težko implementirati algoritem, 
-ki žarek pošlje po vseh poteh ki vodijo do vsaj ene luči, tako da bi se morali zadovoljiti z algoritmom 
+ki žarek pošlje po vseh poteh, ki vodijo do vsaj ene luči. Zadovoljiti bi se morali z algoritmom,
 ki žarke pošilja v razne smeri in upa, da bo vsaj en žarek prišel do luči, če pot do nje obstaja. 
 Implementacija tega predstavlja izboljšavo, ki bi jo lahko dodali v prihodnosti.
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.8\linewidth]{Images/Euclidean_24mm.png}
-  \caption{Euklidski prostor}
+  \caption{Evklidski prostor}
   \label{Slika:Euklidski prostor}
 \end{figure}
 
-Na sceni kamera gleda v krogle obrnjena za 10 stopinj navzgor (da je kader bolj unikaten). Enaka scena, 
+Na sceni kamera gleda v krogle obrnjena za 10 stopinj navzgor. Enaka scena 
 bo uprizorjena tudi v drugih prostorih.
 
 \section{\texorpdfstring{Sledenje žarkom na flat torusu \( \mathbb{T}_{pl}^{3} \)}{Sledenje žarkom na flat torusu}}
@@ -269,20 +267,19 @@ Ko program poženemo, dobimo lep vizualni rezultat.
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.7\linewidth]{Images/flat_torus_24mm_500.png}
-    \caption{Rezultat "ray tracinga" za tri dimenzionalni flat torus (500 preslikanj), kjer scena NIMA ravnine.}
+    \caption{Rezultat "ray tracinga" za tri dimenzionalni flat torus (500 preslikanj), kjer scena nima ravnine.}
     \label{Slika:Rezultat "ray tracinga" za tri dimenzionalni flat torus}
 \end{figure}
 Na sliki lahko opazimo podoben efekt tistemu v hišah iluzij, ko smo v sobi polni ogledal. Razlika je v tem, 
-da se tu žarki ne odbijejo, temceč "teleportirajo" na drugo stran scene, zato slika ni simetrična. Na levi 
-lahko opazujemo sveno kot bi zgledala če bi jo gledali bolj z desne, na desni pa kot da bi jo gledali z leve.
+da se tu žarki ne odbijejo, temveč "teleportirajo" na drugo stran scene, zato slika ni simetrična. Na levi strani slike 
+lahko opazujemo sceno, kot bi izgledala, če bi jo gledali bolj z desne strani, na desni pa kot da bi jo gledali z leve.
 
-Izrišejo se tudi distinktne črte, nekatere izmed njih so celo črne. Nekateri žarki ki so kljub velikemu številu preslikavanj
-(v tem primeru 500) še vseeno črni, se nebodo nikoli srečali z objektom ker grejo v smer ki je povsem vzporedna
+Izrišejo se tudi distinktne črte. Nekateri žarki, ki so kljub velikemu številu preslikavanj
+(v tem primeru 500) še vseeno črni, se ne bodo nikoli srečali z objektom, ker gredo v smer, ki je povsem vzporedna
 z objekti v "sosednjih" scenah.
 
 \section{\texorpdfstring{Sledenje žarkom na dvodimenzionalni sferi \( \mathbb{S}^2 \)}{Sledenje žarkom na dvodimenzionalni sferi}}
-Žarek na dvodimenzionalni sferi bo potoval po najravnejši poti, tj. geodetki. Geodetka je krivulja po sferi, kjer zahtevamo, da je
-pospešek v smeri normale tangentne ravnine 0. Majhen korak po geodetki je v \( uv \) ravnini opisan s sistemom dveh diferencialnih enačb drugega reda.
+Žarek na dvodimenzionalni sferi bo potoval po najravnejši poti, tj. geodetki, kjer je majhen korak v \( uv \) ravnini opisan s sistemom dveh diferencialnih enačb drugega reda.
 \begin{equation}
     \begin{split}
         &\frac{d^{2}u}{dt^{2}}-\cos(u)\sin(u)\frac{dv}{dt}\frac{dv}{dt}=0 \\
@@ -318,7 +315,7 @@ parametrizirana kot
 \end{equation}
 \( u \) lahko dobimo kot
 \begin{equation} \label{e:toU}
-        u=\cos^{-1} \left( \frac{X}{R} \right)
+        u=\cos^{-1} \left( \frac{Z}{R} \right)
 \end{equation}
 za \( v \) pa uporabimo prvi dve enačbi
 \begin{equation} \label{e:toV}
@@ -331,7 +328,7 @@ za \( v \) pa uporabimo prvi dve enačbi
 Za sledenje žarku po geodetki, si moramo poleg začetne točke izbrati še začetno smer
 \(\left( \frac{du}{dt}, \frac{dv}{dt} \right) \). Tako kot pri ostalih prostorih v nalogi, bomo uporabili "FOV" način
 potovanja žarkov iz kamere. Od tu dalje imamo svobodo pri izbiri sfer, po katerih bodo žarki potovali. V tej nalogi smo za
-vsak žarek izračunali središče sfere z najnižjo \( z \) koordinato in polmerom \( R \), žarki pa bodo vedno "zavijali" navzdol, torej se bodo premikali po poldnevnikih.
+vsak žarek izračunali središče sfere z najnižjo \( z \) koordinato in polmerom \( R \). Žarki bodo vedno "zavijali" navzdol, torej se bodo premikali po poldnevnikih.
 
 \begin{figure}[H]
 \centering
@@ -349,7 +346,7 @@ vsak žarek izračunali središče sfere z najnižjo \( z \) koordinato in polme
 \end{minipage}
 \end{figure}
 
-Središča sfer žarkov se bodo torej nahajala na sferi s polmerom \( R \) in središem v kameri \( T_{0} \). Za različne smeri žarkov \(\vec{v}_{i} \) je bilo središče \( C_{i} \) izračunano po sledečem postopku
+Središča sfer žarkov se bodo torej nahajala na sferi s polmerom \( R \) in središem v kameri \( T_{0} \). Za različne smeri žarkov \(\vec{v}_{i} \) je bilo središče \( C_{i} \) izračunano po sledečem postopku:
 
 \bigskip
 
@@ -357,7 +354,7 @@ Izračunamo vektorski produkt med navpičnim vektorjem in smerjo \( \vec{v}_{i} 
 \begin{equation} \label{e:sphC1}
     \vec{n}_{i}=(0, 0, -1) \times \vec{v}_{i}
 \end{equation}
-Vektor, ki od \( T_{0} \) kaže proti iskanemu središču bo ležal v tej ravnini, poleg tega pa bo pravokoten na \( \vec{v}_{i} \). Ponovno uporabimo vektorski
+Vektor, ki od \( T_{0} \) kaže proti iskanemu središču, bo ležal v tej ravnini, poleg tega pa bo pravokoten na \( \vec{v}_{i} \). Ponovno uporabimo vektorski
 produkt
 \begin{equation}\label{e:sphC2}
     \vec{c}_{i}= \vec{v}_{i} \times \vec{n}_{i}
@@ -369,7 +366,7 @@ Krajevni vektor središča nato dobimo tako, da se premaknemo za polmer \( R \) 
 
 Za korak po geodetki bomo \( T_{0} \) najprej premaknili za vektor \( \vec{r}_{ci} \), tako da bo središče sfere v koordinatnem izhodišču. Nato naredimo
 korak, novo točko \( T_{i1} \) pa premaknemo nazaj za vektor \( \vec{r}_{ci} \).
-Ker želimo potovati po poldnevnikih, bomo za začetno smer \(\left( \frac{du}{dt}, \frac{dv}{dt} \right) \) izbrali \(\left( \pm1, 0 \right) \). Korak po poldnevniku bo v \( xy \) ravnini tako že pravilno obrnjen, določiti pa moramo predznak premika po \( u \) glede na to, ali se premikamo v pravo smer \( \vec{v}_{i} \). To preverimo s skalarnim produktom
+Ker želimo potovati po poldnevnikih, bomo za začetno smer \(\left( \frac{du}{dt}, \frac{dv}{dt} \right) \) izbrali \(\left( \pm1, 0 \right) \). Korak po poldnevniku bo v \( xy \) ravnini tako že pravilno obrnjen, določiti pa moramo predznak premika po \( u \) glede na to, ali se premikamo v pravo smer \( \vec{v}_{i} \). To preverimo s skalarnim produktom:
 \bigskip
 \newline
 Naredimo korak v smeri \(\left( 1, 0 \right) \) in označimo dobljeno točko s \( T_{t} \). Vektor v smeri od \( T_{0} \) do \( T_{t} \) označimo z \( \vec{v}_{t} \).
@@ -388,8 +385,8 @@ V nadaljevanju se premikamo po geodetki z eno izmed aproksimacijskih metod. V sp
     \end{split}
 \end{equation},
 problem pa se pojavi pri \( \cot(y_{1}) \) v eni izmed enačb, ki ima pole pri
-\( k\pi \), \( k \in \mathbb{Z} \). Da se temu izognemo ne smemo uporabljati fiksne dolžine koraka, temveč moramo uporabiti adaptivne metode, kot je DOPRI5,
-ki z uporabo večih metod estimira napako približka, in temu primerno prilagodi korak.
+\( k\pi \), \( k \in \mathbb{Z} \). Da se temu izognemo, ne smemo uporabljati fiksne dolžine koraka, temveč moramo uporabiti adaptivne metode, kot je DOPRI5,
+ki z uporabo večih metod estimira napako približka in temu primerno prilagodi korak.
 \bigskip
 \newline
 Algoritmi, ki implementirajo opisane metode so predstavljeni v naslednjem poglavju.
@@ -499,20 +496,26 @@ vir svetlobe "skrit" za eno izmed krogel. Na \hyperref[fig:2sphRays]{sliki žark
 \end{figure}
 
 \bigskip
-Če bi spremljali generirane slike ob premikanju kamere, bi videli, da objekti ki so naravnost pred nami pogosto v sliko vstopajo od zgoraj, kar je prav tako pričakovano. Zgornji žarki, bodo imeli namreč najdaljši doseg, saj je središče njihove sfere premaknjeno najdlje stran od kamere v smeri premikanja. Na \hyperref[fig:sequence]{sekvenci slik} se mimo rdeče krogle premikamo modri krogli, ki je v celoti osvetljena. V ozadju vidimo oranžno ravnino.
+Če bi spremljali generirane slike ob premikanju kamere, bi videli, da objekti ki so naravnost pred nami pogosto v sliko vstopajo od zgoraj, kar je prav tako pričakovano. Zgornji žarki bodo imeli namreč najdaljši doseg, saj je središče njihove sfere premaknjeno najdlje stran od kamere v smeri premikanja. Na \hyperref[fig:sequence]{sekvenci slik} se mimo rdeče krogle premikamo proti modri krogli, ki je v celoti osvetljena. V ozadju vidimo oranžno ravnino.
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{Images/sequence.png}
     \caption{Zaporedje slik s premikanjem kamere}
     \label{fig:sequence}
 \end{figure}
-Sceno, iz sekvence lahko vidimo na \hyperref[fig:2sphRays2]{sliki žarkov}, kjer je prikazan snop žarkov ene vrstice pikslov.
+Sceno iz sekvence lahko vidimo na \hyperref[fig:2sphRays2]{sliki žarkov}, kjer je prikazan snop žarkov ene vrstice pikslov.
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.4\linewidth]{Images/2sphere_rays2.png}
     \caption{Žarki vrstice pikslov}
     \label{fig:2sphRays2}
 \end{figure}
+
+
+Pomembno je omeniti tudi, da v primeru velikih radijev sfer, po katerih se premikajo žarki, prostor izgleda manj popačeno \ref{fig:2sphere R=25}. 
+Slike scene v neevklidskih prosorih vidimo na \ref{fig:Speedup 2sphere scene} in \ref{fig:Speedup euclidean scene}. V prostoru 2sphere, kjer je radij sfere 25, izgleda skoraj kot da bi kamero usmerili v tla. To je 
+ponovno posledica dejstva, da objekti pred nami v sliko vstopajo od zgoraj. Opazimo pa tudi, da je krogla na \hyperref[fig:2sphere R=25]{sliki} 
+uprizorjena, kot da bi jo gledali z višje točke, kar je posledica ukrivljanja žarkov navzdol.
 
 \begin{figure} [H]
     \centering
@@ -521,14 +524,9 @@ Sceno, iz sekvence lahko vidimo na \hyperref[fig:2sphRays2]{sliki žarkov}, kjer
     \label{fig:2sphere R=25}
 \end{figure}
 
-Pomembno je omeniti tudi, da v primeru velikih radijev sfer po katerih se premikajo žarki prostor zgleda manj popačeno. 
-Scena ki smo jo videli že prej v prostoru 2sphere kjer je radij sfer 25 zgleda skoraj kot da kamero usmerili v tla. To je 
-ponovno posledica dejstva, da objekti pred nami v sliko vstopajo od zgoraj. Opazimo pa tudi, da je krogla na sliki 
-uprizorjena kot, da bi jo gledali z višje točke, kar je posledica ukrivljanja žarkov navzdol.
-
 \section{Primerjava metode sledenje žarku v evklidskem in neevklidskem prostoru}
 Primerjamo enako pozicijo kamere in enako postavitev objektov v prostoru v evklidskem in dveh neevklidskih prostorih. Postavitev objektov je enaka kot
-na \hyperref[fig:2sphRays2]{sliki}. Za razliko od evklidskega prostora pri torusu opazimo podvojene objekte, kjer pričakujemo, da bi z večjim številom korakov bilo čedalje manj črnih pikslov. Pri dvodimenzionalni sferi pri dani postavitvi modre krogle še ne vidimo, rdeča pa je precej popačena. Ploskev pod kroglama je nagnjena, zato pri dvodimenzionalni sferi opazimo, da je spodnji žarki ne zadanejo več.
+na \hyperref[fig:2sphRays2]{sliki žarkov}. Za razliko od evklidskega prostora pri torusu opazimo podvojene objekte, kjer pričakujemo, da bi z večjim številom korakov bilo čedalje manj črnih pikslov. Pri dvodimenzionalni sferi, pri dani postavitvi modre krogle še ne vidimo, rdeča pa je precej popačena. Ploskev pod kroglama je nagnjena, zato pri dvodimenzionalni sferi opazimo, da je spodnji žarki ne zadanejo več.
 \begin{figure}[H]
 \centering
 \begin{minipage}[t]{.33\textwidth}
@@ -554,35 +552,33 @@ na \hyperref[fig:2sphRays2]{sliki}. Za razliko od evklidskega prostora pri torus
 
 \newpage
 \section{Pohitritev algoritma}
-Da ne bi bilo potrebno na vsako sliko čakati predolgo časa, so se zauzeli da algoritme pohitrimo. 
+Da ne bi bilo potrebno na vsako sliko čakati predolgo časa, lahko algoritme pohitrimo. 
 
 \subsection{Pohitritev osnovnega algoritma}
-Po krajšem razmisleku, odkrijemo naslednji težavi: 
+Opazimo naslednji težavi: 
 \begin{enumerate}
   \item Korakanje žarka po prostoru hitro postane računsko prezahtevno, če je korak majhen.
-  \item Če je korak pre velik, se lahko zgodi, da v v neki točki preskoči presečišče z objektom.
+  \item Če je korak prevelik, se lahko zgodi, da v neki točki preskoči presečišče z objektom.
 \end{enumerate}
 
 \begin{figure} [H]
   \centering
   \includegraphics[width=0.6\linewidth]{Images/step_size_issue.png}
-  \caption{Zaradi pre velikega koraka, zgrešimo presečišče.}
+  \caption{Zaradi prevelikega koraka, zgrešimo presečišče.}
   \label{fig:step_size_issue}
 \end{figure}
 
 Še enkrat se spomnimo, kaj je naš problem. Iščemo najmanjši parameter \( t \), za katerega velja:
 \[ f = o(s(t)) = 0 \]
-\( o([x, y, z]) = a \) je funkcija (kateregakoli) objekta v sceni, ki je enaka 0 samo ko je 
-točka \([x, y, z]\) na objektu, \newline
-\( s(t, T, \vec{v}) = [x, y, z] \) (ali pa kar \( s(t) \) ker se pogovarjamo o enem specifičnem žarku)
- pa je funkcija, ki vrne točko v prostoru kjer se nahaja žarek z izhodiščem v \( T_0\) in smerjo 
+\( o([x, y, z]) = a \) je funkcija (kateregakoli) objekta v sceni, ki je enaka 0 samo, ko je 
+točka \([x, y, z]\) na objektu. 
+\( s(t, T, \vec{v}) = [x, y, z] \) je funkcija, ki vrne točko v prostoru, kjer se nahaja žarek z izhodiščem v \( T_0\) in smerjo 
 \( \vec{v} \) ob času \( t \).
 
 
 Da bolje razumemo problem, si poglejmo par grafov, ki prikazujejo kako se 
 "razdalja" do oranžne krogle (vrednost funkcije \( o(t) \)) spreminja glede na razdaljo žarka od 
-kamere (vrednost \( t \)) v evklidskem prostoru in prostoru 2sphere. (Obkrožen je tudi piksel katerega žarek spremljamo, 
-v sredini slike)
+kamere (vrednost \( t \)) v evklidskem prostoru in prostoru 2sphere. V sredini slike je obkrožen piksel katerega žarek spremljamo.
 
 \begin{figure}[H]
   \centering
@@ -618,16 +614,14 @@ v sredini slike)
   \end{minipage}
 \end{figure}
 
-Hitro nam postane jasno, da razdalja žarka sledi funkciji, ki nima, ima eno, ali pa dve ničli. 
-(za 2sphere, seveda iščemo le na intervalu \(t \in [0, 2\pi] \)). Imamo le en minimum, 
-za katerega velja da če je večji od 0, se žarek objekta nikoli nebo dotaknil.
+Hitro nam postane jasno, da razdalja žarka sledi funkciji, ki ima 0, 1, ali 2 ničli (za 2sphere iščemo le na intervalu \(t \in [0, 2\pi] \)). 
+Imamo le en minimum za katerega velja, da če je večji od 0, se žarek objekta nikoli ne bo dotaknil.
 
 Implementirali smo naslednje izboljšave osnovnega algoritma:
 \begin{itemize}
-  \item Ko opazimo, da se funkcija \( o(t) \) začne povečevati (po tem ko je že padala), 
-  razpolovimo korak (da preverimo če smo preskočili presečišče)
-  \item Kdokler se funkcija \( o(t) \) NE povečuje, povečujemo korak 
-  (da hitreje pridemo do presečišča)
+  \item Ko opazimo, da se funkcija \( o(t) \) začne povečevati, po tem ko je že padala, 
+  razpolovimo korak, da preverimo če smo preskočili presečišče
+  \item Dokler se funkcija \( o(t) \) ne povečuje, večamo korak, da hitreje pridemo do presečišča.
 \end{itemize}
 
 \subsection{Pohitritev iskanja presečišč za euclidean in flat torus}
@@ -636,52 +630,25 @@ Ideja je preprosta. Zakaj bi delali iterativne korake, če lahko preprosto izpel
 formulo za izračun parametra \( t \) za katerega velja \( f = 0 \)? Tako presečišče 
 najdemo v času odvisnem le od števila objektov v sceni.
 
-Flat torus uporablja kar formulo za presečišče iz evklidskega prostora, le da še preslika
-žarke če naletijo na rob torusa.
+Flat torus uporablja kar formulo za presečišče iz evklidskega prostora, le da žarke še preslika, če pridejo do roba torusa.
 
 \subsection{Pohitritev iskanja presečišč za 2Sphere}
 
-Direktna izpeljava formule za presečišče žarka z 2Sphere je precej bolj zapletena,
-zato mi ni uspela. Vseeno pa smo našli rešitev, ki je hitrejša od iterativnega pristopa
-računanja odvoda odvodov in geodetk.
+Za 2Sphere smo našli rešitev, ki je hitrejša od iterativnega pristopa aproksimacij premikov po geodetkah.
 
-Vsak žarek, gre namreč čez vrh in dno sfere. Zato ga lahko parametriziramo, tako kot bi 
-parametrizirali točko na sferi:
-\begin{equation}
-  \begin{split}
-    &x = R\cos(v)\cos(t) + x_0 \\
-    &y = R\sin(t) + y_0 \\
-    &z = R\sin(v) \cos(t) + z_0
-  \end{split}
-\end{equation}
-
-Radij krogle \( R \) je podan parameter prostora.
-\(v\) lahko izračunamo iz smernega vektorja žarka v, kot:
-\begin{equation}
-  \begin{split}
-  &v = \arctan \left( \frac{v_z}{v_x} \right) \\
-  &u = \arctan \left( \frac{v_y}{\sqrt{v_x^2 + v_z^2}} \right)
-  \end{split}
-\end{equation}
-
-Nekaj imamo še dela, da poiščemo center krogle \( [x_0, y_0, z_0] \). Ker nas zanima le  
-najnižja možna krogla v katero lahko žarek vstopi, do centra lahko pridemo kar tako, da 
-gremo od kamere kar za \( R\) v smeri vektorja \( v - \pi/2 \).
-
-Ta parametrizacija je povsem kompatibilna z pohitrenim algoritmom za iskanje presečišč, 
-ki sem ga opisal prej.
+Vsak žarek, gre namreč čez vrh in dno sfere. Žarek parametriziramo, kot točko na sferi. Za žarek poiščemo center krogle \( [x_0, y_0, z_0] \), kot smo ga prej in za preslikavo na $uv$ ravnino uporabimo enačbi \ref{e:toU} in \ref{e:toV}
+. Korak predstavlja sprememba parametra $u$.
 
 \section{Zaključek}
 Naš cilj je bil narediti program, v katerem se vsak uporabnik lahko igra z različnimi neevklidskimi
 prostori in jih vizualizira. To nam je uspelo. Uspelo nam je tudi pospešiti program do te mere, da 
-na slike v dokaj visoki resoluciji ni potrebno čakati več kot nekaj deset sekund, na slike v evklidskem 
-prostoru celo manj kot 10 sekund (za 1500 x 1000 sliko).
+na slike v dokaj visoki resoluciji ni potrebno čakati več kot nekaj deset sekund. Na slike v evklidskem 
+prostoru pa, za 1500 x 1000 sliko, celo manj kot 10 sekund.
 
-Sicer obstaja še marsi katea optimizacija, ter še marsi katera funkcionalnost, ki bi jo lahko dodali,
-na primer možnosti dodajanja materialov in senčenja. Na žalost nam je za to zmanjkalo časa.
+Sicer obstaja še marsikatera optimizacija in funkcionalnost, ki bi jo lahko dodali,
+na primer možnosti dodajanja materialov in boljši algoritem senčenja.
 
-Seveda je bil eden izmed ciljev tudi, enostavno dodajanje novih objektov in prostorov. Z veseljem lahko 
-povem, da nam je tudi to uspelo:
+Eden izmed ciljev je bil tudi enostavno dodajanje novih objektov in prostorov:
 
 \begin{figure} [H]
   \centering
