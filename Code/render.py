@@ -33,12 +33,12 @@ class _RendererWorker:
 
         # For each pixel in the column
         for j in range(res_y):
-            # distortion_corrected_deg = [ray_direction_deg[0] * np.cos(np.radians(ray_direction_deg[1])), ray_direction_deg[1]] #Correct for distortion
-            ray_direction_vec = vector_uvw.degrees_to_vector(ray_direction_deg)
+            distortion_corrected_deg = [ray_direction_deg[0], ray_direction_deg[1] * np.cos(np.radians(ray_direction_deg[0]))] #Correct for distortion
+            ray_direction_vec = vector_uvw.degrees_to_vector(distortion_corrected_deg)
+
             ray_direction_vec = np.dot(rotation_matrix, ray_direction_vec) # Rotate into the direction of the camera
 
-            ray = Ray(ray_origin, ray_direction_vec, ray_direction_deg) #TODO Pr 2 sphere uporablam to, ampak dela samo za kamera naravnost...
-            
+            ray = Ray(ray_origin, ray_direction_vec, distortion_corrected_deg) #TODO Pr 2 sphere uporablam to, ampak dela samo za kamera naravnost...
             image[j] = self._trace_ray(ray, objects, lights, space, background_color)
 
             # Obrnem ray
@@ -178,11 +178,11 @@ class Renderer:
         # ray_direction_deg = np.array([cam_u - (fov_x / 2),
         #                               cam_v + (fov_y / 2)])
         
-        ray_direction_deg = np.array([-fov_x / 2, 
-                                      fov_y / 2])
+        ray_direction_deg = np.array([(- fov_x / 2), 
+                                       fov_y / 2])
         
         # Rotacijska matrika za smer kamere
-        rotation_matrix = vector_uvw.get_rotation_matrix(camera.orientation)
+        rotation_matrix = vector_uvw.get_rotation_matrix(camera.orientation[:2])
 
         # Print and debug
         print("|start..........................................................................................end|")
@@ -261,17 +261,22 @@ class Renderer:
             kot_step = fov_x / res_x # Dejansko sta enaka, ker je piksel kvadraten.
 
             # Initial smer raya zračunam kot polovica fov_x lavo in fov_y gor
-            ray_direction_deg = np.array([cam_u - (fov_x / 2), 
-                                cam_v + (fov_y / 2)])
+            ray_direction_deg = np.array([-(fov_x / 2), 
+                                          (fov_y / 2)])
 
             # Obrnem ray tko kot praujo
             ray_direction_deg[0] += kot_step * pixel[1] # pixel(vrsta, stolpec)
             ray_direction_deg[1] -= kot_step * pixel[0]
 
+            # Will need this to rotate the ray v smer kamere
+            rotation_matrix = vector_uvw.get_rotation_matrix(camera.orientation[:2])
 
-            ray_direction_vec = vector_uvw.degrees_to_vector(ray_direction_deg)
+            # Distorsion correction
+            distortion_corrected_deg = [ray_direction_deg[0], ray_direction_deg[1] * np.cos(np.radians(ray_direction_deg[0]))] #Correct for distortion
+            ray_direction_vec = vector_uvw.degrees_to_vector(distortion_corrected_deg)
+            
+            ray_direction_vec = np.dot(rotation_matrix, ray_direction_vec)
 
-            direction_vector = vector_uvw.degrees_to_vector(camera.orientation[:2])
             ray = Ray(camera.position, ray_direction_vec, ray_direction_deg)
         else:
             direction_vector = vector_uvw.degrees_to_vector(camera.orientation[:2])

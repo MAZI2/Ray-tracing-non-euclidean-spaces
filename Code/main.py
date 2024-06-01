@@ -3,17 +3,27 @@ import logging
 from utilities import suppress_stdout, Logger
 Logger.configure("Logs/raytracer.log", logging.DEBUG, False, True)
 
-from objects import Sphere, Plane, Light, Camera
+from objects import Sphere, Plane, Light, Camera, Heart, Cube
 from spaces import Euclidean, FlatTorus, TwoSphere
 from scene import Scene
+# Scene.configure({#"sphere": Sphere((7, 0, 0), 2, (255, 145, 71)), 
+#                   "heart": Heart((6.5, -0.5, 0), (0, 0, 0), 2, (255, 145, 71)),
+#                   # "sphere1": Sphere((4.5, 1.6, 2), 0.5, (79, 158, 245)), 
+#                   "cube": Cube((4.2, 1.7, 2.5), (0, 0, 0), 0.9, (79, 158, 245)),
+#                   "sphere2": Sphere((6.7, -2.3, -3.5), 0.7, (198, 91, 124)), 
+#                   # "plane": Plane((0, -3, 0), (0, 1, 0), (200, 200, 200)),
+#                   "light": Light((0, 6, 8)), 
+#                   "camera": Camera((-4, -1.5, 0), (0, 10, 0), (750, 500), 84), # -4 -1.5, 84
+#                   "flattorus": FlatTorus(200)})
+#                   #"twosphere": TwoSphere(10)})
+#                   # "euclidean": Euclidean()})
 Scene.configure({"sphere": Sphere((7, 0, 0), 2, (255, 145, 71)), 
-                  "sphere1": Sphere((4.3, 1.6, 2), 0.5, (79, 158, 245)), 
-                  "sphere2": Sphere((6.7, -2.3, -3), 0.5, (198, 91, 124)), 
+                 "sphere1": Sphere((4.5, 1.6, 2), 0.5, (79, 158, 245)), 
+                  "sphere2": Sphere((6.7, -2.3, -3.5), 0.7, (198, 91, 124)), 
                   "plane": Plane((0, -3, 0), (0, 1, 0), (200, 200, 200)),
                   "light": Light((0, 6, 8)), 
-                  # "camera": Camera((0, 0, 0), (0, 0, 0), (1600, 1200), 170), # 127 za 90 stopinj levo desno fov
-                  "camera": Camera((-4, 2, 0), (0, 0, 0), (1400, 1000), 84), # 127 za 90 stopinj levo desno fov
-                  "twosphere": TwoSphere(13)})
+                  "camera": Camera((-4, -1.5, 0), (0, 10, 0), (1500, 1000), 84), # -4 -1.5, 84
+                  "euclidean": Euclidean()})
 
 from ui import _UIThread
 _UIThread.configure(1)

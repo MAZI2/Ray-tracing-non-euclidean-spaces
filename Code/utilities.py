@@ -13,6 +13,7 @@ class vector_uvw:
         """
         Convert angles in degrees (pan, tilt, 0) to a direction base vector.
         """
+        # KAO u IN v ZAMEŠANA KOKR JIH USI RAZUMEJO sam men je tko bl smislno idk
         u, v = rotation # (pan, tilt, roll), roll not used right now.
 
         # Convert degrees to radians
@@ -30,6 +31,7 @@ class vector_uvw:
         """
         Convert a direction vector into angles in degrees (pan, tilt, 0).
         """
+        # KAO u IN v ZAMEŠANA KOKR JIH USI RAZUMEJO sam men je tko bl smislno idk
         # Normalize vector to avoid scale issues
         norm_vector = vector / np.linalg.norm(vector)
         x, y, z = norm_vector
@@ -47,12 +49,12 @@ class vector_uvw:
 
     @staticmethod
     def get_rotation_matrix(rotation: np.ndarray) -> np.ndarray:
-        pan, tilt, roll = rotation
+        pan, tilt = rotation
 
         # Convert degrees to radians
         pan_rad = np.radians(pan)
         tilt_rad = np.radians(tilt)
-        roll_rad = np.radians(roll)
+        # roll_rad = np.radians(roll)
         
 
         # Rotation matrix around the y-axis (pan) 
@@ -69,15 +71,15 @@ class vector_uvw:
             [0, 0, 1]
         ])
 
-        # Rotation matrix around the x-axis (roll) 
-        R_x = np.array([
-            [1, 0, 0],
-            [0, np.cos(roll_rad), -np.sin(roll_rad)],
-            [0, np.sin(roll_rad), np.cos(roll_rad)]
-        ])
+        # # Rotation matrix around the x-axis (roll) 
+        # R_x = np.array([
+        #     [1, 0, 0],
+        #     [0, np.cos(roll_rad), -np.sin(roll_rad)],
+        #     [0, np.sin(roll_rad), np.cos(roll_rad)]
+        # ])
 
         # Combined rotation matrix
-        return np.dot(np.dot(R_x, R_z), R_y)
+        return np.dot(R_y, R_z) # np.dot(R_z, np.dot(R_y, R_x))
 
 
 class Ray:

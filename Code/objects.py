@@ -28,15 +28,15 @@ class _SceneObject:
     
     def move(self, x: float = None, y: float = None, z: float = None, 
              dx: float = 0, dy: float = 0, dz: float = 0):
-        self.x = x if x else self.x + dx # Tko sm napisu da da dx prednost če se zatipkaš
-        self.y = y if y else self.y + dy
-        self.z = z if z else self.z + dz
+        self.x = x if x is not None else self.x + dx # Tko sm napisu da da dx prednost če se zatipkaš
+        self.y = y if y is not None else self.y + dy
+        self.z = z if z is not None else self.z + dz
     
-    def rotate(self, u: float = 0, v: float = 0, w: float = 0, 
+    def rotate(self, u: float = None, v: float = None, w: float = None, 
                du: float = 0, dv: float = 0, dw: float = 0):
-        self.u = u if not du else self.u + du
-        self.v = v if not dv else self.v + dv
-        self.w = w if not dw else self.w + dw #Is not used yet
+        self.u = u if u is not None else self.u + du
+        self.v = v if v is not None else self.v + dv
+        self.w = w if w is not None else self.w + dw #Is not used yet
     
     def set_attribute(self, attribute: str, value: float):
         """Set an attribute of the object."""
@@ -110,11 +110,7 @@ class _IntersectableObject(_SceneObject):
         Vrne vrednost neke enačbe, ki je = 0 samo če je točka na objektu. Za sphere npr ||point - center|| - radius"""
         raise NotImplementedError
 
-    # Space specific izpeljave: Ime funkcije more bit isti imenu prostora
-    def euclidean(self, ray: Ray) -> float:
-        """Specifično izpeljane formule morjo met ime funkcije enako imenu prostora.
-        Specifično izpeljana funkcija ki vrne parametr t kjer se ray seka za evklidski prostor."""
-        raise NotImplementedError
+    # Za specifične izpeljave, napiš v objekt funkcijo k ma enako ime kot prostor!
 
 class Sphere(_IntersectableObject):
     def __init__(self, position: np.ndarray = np.array([10, 0, 0]),
@@ -246,6 +242,70 @@ class Plane(_IntersectableObject):
 ObjectsRegistry.register("plane", Plane, 
                                 "Use: Plane position=<(x, y, z)> normal=<(u, v, 0)> [rgb=(r, g, b)] [visible=<True/False>]")
 
+
+class Heart(_IntersectableObject):
+    def __init__(self, position: np.ndarray = np.array([0, 0, 0]),
+                 orientation: np.ndarray = np.array([0, 0, 0]),
+                 scale: float = 1.0,
+                 rgb: np.ndarray = np.array([255, 255, 255]),
+                 visible: bool = True):
+        super().__init__(position, orientation, rgb, visible)
+        self.scale = scale
+        self.type = _ObjectTypes.object
+        self.name = "heart"
+
+        true_rotation = np.array([self.u + 90, self.v - 90]) # Da srce gleda v x smer
+        self.rotation_matrix = vector_uvw.get_rotation_matrix(true_rotation)
+
+    @property
+    def orientation(self) -> np.ndarray:
+        return np.array([self.u, self.v, self.w])
+    
+    @orientation.setter
+    def orientation(self, orientation: np.ndarray):
+        self.u, self.v, self.w = orientation
+        true_rotation = np.array([self.u + 90, self.v - 90]) # Da srce gleda v x smer
+        self.rotation_matrix = vector_uvw.get_rotation_matrix(true_rotation)
+
+    def equation(self, point: np.ndarray) -> float:
+        translated_point = (point - self.position) / self.scale
+        rotated_point = np.dot(self.rotation_matrix, translated_point)
+        x, y, z = rotated_point
+        return (x**2 + 9/4 * y**2 + z**2 - 1)**3 - x**2 * z**3 - 9/80 * y**2 * z**3
+ObjectsRegistry.register("heart", Heart,
+                                "Use: Heart position=<(x, y, z)> [orientation=<(u, v, w)>] [scale=<scale>] [rgb=(r, g, b)] [visible=<True/False>]")
+
+class Cube(_IntersectableObject):
+    def __init__(self, position: np.ndarray = np.array([0, 0, 0]),
+                 orientation: np.ndarray = np.array([0, 0, 0]),
+                 scale: float = 1.0,
+                 rgb: np.ndarray = np.array([255, 255, 255]),
+                 visible: bool = True):
+        super().__init__(position, orientation, rgb, visible)
+        self.scale = scale
+        self.type = _ObjectTypes.object
+        self.name = "cube"
+        self.rotation_matrix =  vector_uvw.get_rotation_matrix(orientation[:2])
+
+    @property
+    def orientation(self) -> np.ndarray:
+        return np.array([self.u, self.v, self.w])
+    
+    @orientation.setter
+    def orientation(self, orientation: np.ndarray):
+        self.u, self.v, self.w = orientation
+        self.rotation_matrix =  vector_uvw.get_rotation_matrix(orientation[:2])
+
+    def equation(self, point: np.ndarray) -> float:
+        translated_point = (point - self.position) / self.scale
+        rotated_point = np.dot(self.rotation_matrix, translated_point)
+        x, y, z = rotated_point
+
+        return max(abs(x), abs(y), abs(z)) - 0.5
+
+# Register the Cube object in the ObjectsRegistry
+ObjectsRegistry.register("cube", Cube, 
+                         "Use: Cube position=<(x, y, z)> orientation=<(u, v, w)> scale=<scale_factor> [rgb=(r, g, b)] [visible=<True/False>]")
 
 # -------------------- Lights --------------------
 

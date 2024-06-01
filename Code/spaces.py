@@ -109,11 +109,14 @@ class FlatTorus(_Space):
     # Equation stuff
     def xyz_equation(self, ray: Ray, t: float) -> np.ndarray:
         x, y, z = ray.origin + ray.direction * t
-        x = x % self.a
-        y = y % self.b
-        z = z % self.c
+        x = ((x + self.a/2) % self.a) - self.a/2
+        y = ((y + self.b/2) % self.b) - self.b/2
+        z = ((z + self.c/2) % self.c) - self.c/2
         return np.array([x, y, z])
     
+    def get_intersection(self, ray: Ray, object: _IntersectableObject) -> float:
+        return adaptive_step(ray, object, self)
+
     def get_intersections(self, ray: Ray,
                    objects: List[_IntersectableObject],
                    max_distance: float = float("inf")) -> Tuple[_IntersectableObject, np.ndarray]:
@@ -124,11 +127,11 @@ class FlatTorus(_Space):
 
         for _ in range(int(self.repetitions)):
             for obj in objects:
-                if hasattr(obj, "euclidean"): #If euclidean function is implemented
-                    t = obj.euclidean(ray)
+                if hasattr(obj, "euclidean"): # Object ma izpeljano formulo k direkt vrne paremetr t
+                    method = getattr(obj, "euclidean") 
+                    t = method(ray)
                 else:
-                    # TODO Prepiš iz finc_intersection!!!
-                    raise NotImplementedError
+                    t = self.get_intersection(ray.copy(), obj)
                 
                 if t is not None and t <= t_of_closest and t <= max_distance:
                     # Update the closest object, break
@@ -187,29 +190,17 @@ class TwoSphere(_Space):
         self.R = R
         self.type = _ObjectTypes.space
         self.name = "twosphere" 
-
-        self.last_direction_deg = None
-        self.last_origin = None
-        self.last_sphere_center = None
     
     def __str__(self) -> str:
         prev = super().__str__()
         return prev + f"R: {self.R:<10} "
 
     # Equation stuff
-    def xyz_equation(self, ray: Ray, t: float) -> np.ndarray:
-        # t = t/360 * 2*np.pi
-        u = ray.direction_deg[0]
-
-        # if ray.direction_deg is self.last_direction_deg and ray.origin is self.last_origin:
-        #     sphere_center = self.last_sphere_center
-        # else:
-        vector_to_center = vector_uvw.degrees_to_vector((u, ray.direction_deg[1] - 90)) # Vektor ki gre od točke prot centru "sfere"
+    def xyz_equation(self, ray: Ray, t: float) -> np.ndarray: #TODO Tukej bi naredu memorizacijo, in u in v zračunu iz podanga raya ker (če kamera ne gleda naravnost) ta k je znotrej raya ni pravi.
+        u, v = vector_uvw.vector_to_degrees(ray.direction)
+        # u, v = ray.direction_deg[:2]
+        vector_to_center = vector_uvw.degrees_to_vector((u, v - 90)) # Vektor ki gre od točke prot centru "sfere"
         sphere_center = ray.origin + vector_to_center * self.R # Za R proti središču sfere od točke na sferi je center
-
-        # self.last_direction_deg = ray.direction_deg
-        # self.last_origin = ray.origin
-        # self.last_sphere_center = sphere_center
 
         u = np.radians(u)
         # t is already in radians
