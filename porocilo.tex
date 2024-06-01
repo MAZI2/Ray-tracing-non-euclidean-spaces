@@ -80,7 +80,7 @@ Za ravnino z normalo \( \vec{n} = [a, b, c]^T \) in točko na ravnini $(x_{0}, y
 
 \subsection{Prostori}
 Vsak prostor implementira funkcijo v obliki
-\[ s(t, T, \vec{v}): \mathbb{R} \to \mathbb{R}^3 = [x, y, z]^T \],
+\[ s(t, T, \vec{v}): \mathbb{R} \to \mathbb{R}^3 = [x, y, z]^T \]
 ki vrne točko v prostoru, kjer bi bil žarek, ki gre skozi točko \(T\) v smeri \(\vec{v}\), če 
 ga premaknemo za razdaljo \(t\) po tem prostoru. V prostoru 2-Sphere funkcija računa približek, v primeru evklidskega prostora pa je to 
 preprosto premik po premici za razdaljo \(t\)
@@ -326,8 +326,9 @@ za \( v \) pa uporabimo prvi dve enačbi
 \end{equation}
 
 Za sledenje žarku po geodetki, si moramo poleg začetne točke izbrati še začetno smer
-\(\left( \frac{du}{dt}, \frac{dv}{dt} \right) \). Tako kot pri ostalih prostorih v nalogi, bomo uporabili "FOV" način
-potovanja žarkov iz kamere. Od tu dalje imamo svobodo pri izbiri sfer, po katerih bodo žarki potovali. V tej nalogi smo za
+\(\left( \frac{du}{dt}, \frac{dv}{dt} \right) \). Tako kot pri ostalih prostorih v nalogi, 
+bomo uporabili perspektivno projekcijo, kar pomeni da vsi žarki izvirajo iz ene točke in 
+niso paroma vzporedni. Od tu dalje imamo svobodo pri izbiri sfer, po katerih bodo žarki potovali. V tej nalogi smo za
 vsak žarek izračunali središče sfere z najnižjo \( z \) koordinato in polmerom \( R \). Žarki bodo vedno "zavijali" navzdol, torej se bodo premikali po poldnevnikih.
 
 \begin{figure}[H]
@@ -383,7 +384,7 @@ V nadaljevanju se premikamo po geodetki z eno izmed aproksimacijskih metod. V sp
         &t_{n+1}=t_{n}+h \\
         &\vec{y}_{n+1}=\vec{y}_{n}+h \cdot \vec{f}(t_{n}, \vec{y}_{n})
     \end{split}
-\end{equation},
+\end{equation}
 problem pa se pojavi pri \( \cot(y_{1}) \) v eni izmed enačb, ki ima pole pri
 \( k\pi \), \( k \in \mathbb{Z} \). Da se temu izognemo, ne smemo uporabljati fiksne dolžine koraka, temveč moramo uporabiti adaptivne metode, kot je DOPRI5,
 ki z uporabo večih metod estimira napako približka in temu primerno prilagodi korak.
@@ -555,6 +556,7 @@ na \hyperref[fig:2sphRays2]{sliki žarkov}. Za razliko od evklidskega prostora p
 Da ne bi bilo potrebno na vsako sliko čakati predolgo časa, lahko algoritme pohitrimo. 
 
 \subsection{Pohitritev osnovnega algoritma}
+\label{subsec:pohitren_algoritem}
 Opazimo naslednji težavi: 
 \begin{enumerate}
   \item Korakanje žarka po prostoru hitro postane računsko prezahtevno, če je korak majhen.
@@ -636,8 +638,20 @@ Flat torus uporablja kar formulo za presečišče iz evklidskega prostora, le da
 
 Za 2Sphere smo našli rešitev, ki je hitrejša od iterativnega pristopa aproksimacij premikov po geodetkah.
 
-Vsak žarek, gre namreč čez vrh in dno sfere. Žarek parametriziramo, kot točko na sferi. Za žarek poiščemo center krogle \( [x_0, y_0, z_0] \), kot smo ga prej in za preslikavo na $uv$ ravnino uporabimo enačbi \ref{e:toU} in \ref{e:toV}
-. Korak predstavlja sprememba parametra $u$.
+Vsak žarek, gre namreč čez vrh in dno sfere. Žarek parametriziramo, kot točko na sferi. Za žarek poiščemo center 
+krogle \( [x_0, y_0, z_0] \), kot smo ga prej in za preslikavo na $uv$ ravnino uporabimo enačbi \ref{e:toU} in \ref{e:toV}. 
+Parametrizacija žarka \(s(t)\) je torej:
+
+\begin{equation}
+  \begin{split}
+    &x = R\cos(v)\sin(t) + x_0 \\
+    &y = R\sin(v) \sin(t) + y_0 \\
+    &z = R\cos(t) + z_0
+  \end{split}
+\end{equation}
+
+Parametrizacija za razliko od prejšnje ne računa približkov, ampak točno rešitev za katerokoli velikost koraka. 
+Zato jo lahko uporabimo v algoritmu\ref{subsec:pohitren_algoritem}.
 
 \section{Zaključek}
 Naš cilj je bil narediti program, v katerem se vsak uporabnik lahko igra z različnimi neevklidskimi
