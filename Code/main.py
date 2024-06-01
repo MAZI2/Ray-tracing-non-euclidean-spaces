@@ -9,11 +9,11 @@ from scene import Scene
 Scene.configure({"sphere": Sphere((7, 0, 0), 2, (255, 145, 71)), 
                   "sphere1": Sphere((4.3, 1.6, 2), 0.5, (79, 158, 245)), 
                   "sphere2": Sphere((6.7, -2.3, -3), 0.5, (198, 91, 124)), 
-                  # "plane": Plane((0, -3, 0), (0, 1, 0), (200, 200, 200)),
+                  "plane": Plane((0, -3, 0), (0, 1, 0), (200, 200, 200)),
                   "light": Light((0, 6, 8)), 
                   # "camera": Camera((0, 0, 0), (0, 0, 0), (1600, 1200), 170), # 127 za 90 stopinj levo desno fov
-                  "camera": Camera((0, 0, 0), (0, 0, 0), (200, 200), 180), # 127 za 90 stopinj levo desno fov
-                  "flattorus": FlatTorus()})
+                  "camera": Camera((-4, 2, 0), (0, 0, 0), (1400, 1000), 84), # 127 za 90 stopinj levo desno fov
+                  "twosphere": TwoSphere(13)})
 
 from ui import _UIThread
 _UIThread.configure(1)

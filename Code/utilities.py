@@ -50,9 +50,10 @@ class vector_uvw:
         pan, tilt, roll = rotation
 
         # Convert degrees to radians
+        pan_rad = np.radians(pan)
         tilt_rad = np.radians(tilt)
         roll_rad = np.radians(roll)
-        pan_rad = np.radians(pan)
+        
 
         # Rotation matrix around the y-axis (pan) 
         R_y = np.array([

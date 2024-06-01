@@ -23,6 +23,7 @@ class _RendererWorker:
             kot_step: float, 
             ray_origin: np.ndarray,
             ray_direction_deg: np.ndarray,
+            rotation_matrix: np.ndarray,
             objects: List[_IntersectableObject], 
             lights: List[Light], 
             space: _Space, 
@@ -32,19 +33,16 @@ class _RendererWorker:
 
         # For each pixel in the column
         for j in range(res_y):
-            true_ray_direction_deg = [ray_direction_deg[0]/np.cos(np.radians(ray_direction_deg[1])), ray_direction_deg[1]]
-            ray_direction_vec = vector_uvw.degrees_to_vector(true_ray_direction_deg)
-            ray = Ray(ray_origin, ray_direction_vec, ray_direction_deg)
+            # distortion_corrected_deg = [ray_direction_deg[0] * np.cos(np.radians(ray_direction_deg[1])), ray_direction_deg[1]] #Correct for distortion
+            ray_direction_vec = vector_uvw.degrees_to_vector(ray_direction_deg)
+            ray_direction_vec = np.dot(rotation_matrix, ray_direction_vec) # Rotate into the direction of the camera
+
+            ray = Ray(ray_origin, ray_direction_vec, ray_direction_deg) #TODO Pr 2 sphere uporablam to, ampak dela samo za kamera naravnost...
             
             image[j] = self._trace_ray(ray, objects, lights, space, background_color)
 
             # Obrnem ray
             ray_direction_deg[1] -= kot_step
-            # if ray_direction_deg[1] < -90:
-            #     odmik = ray_direction_deg[1] + 90
-            #     ray_direction_deg[1] = -90 - odmik
-            #     ray_direction_deg[0] += 180 if ray_direction_deg[0] < 0 else -180
-            #     kot_step = -kot_step
         
         self.logger.debug(f"Column {column_num} rendered.")
 
@@ -176,9 +174,15 @@ class Renderer:
         # Step size kota v x in y smeri
         kot_step = fov_x / res_x # Dejansko sta enaka, ker je piksel kvadraten.
 
-        # Initial smer raya zračunam kot polovica fov_x lavo in fov_y gor
-        ray_direction_deg = np.array([cam_u - (fov_x / 2), 
-                             cam_v + (fov_y / 2)])
+        # Initial smer raya, brez smeri kamere (upoštevam jo kasnej)
+        # ray_direction_deg = np.array([cam_u - (fov_x / 2),
+        #                               cam_v + (fov_y / 2)])
+        
+        ray_direction_deg = np.array([-fov_x / 2, 
+                                      fov_y / 2])
+        
+        # Rotacijska matrika za smer kamere
+        rotation_matrix = vector_uvw.get_rotation_matrix(camera.orientation)
 
         # Print and debug
         print("|start..........................................................................................end|")
@@ -197,11 +201,11 @@ class Renderer:
         for i in range(res_x):
             if parallel:
                 self.pool.apply_async(worker.run, 
-                                      args=(i, res_y, kot_step, camera.position, ray_direction_deg.copy(), 
+                                      args=(i, res_y, kot_step, camera.position, ray_direction_deg.copy(), rotation_matrix,
                                             scene.objects, scene.lights, scene.space, background_color),
                                       callback=lambda result: self._recieve_column(*result))
             else:
-                column, new_i = worker.run(i, res_y, kot_step, camera.position, ray_direction_deg.copy(), 
+                column, new_i = worker.run(i, res_y, kot_step, camera.position, ray_direction_deg.copy(), rotation_matrix,
                                                     scene.objects, scene.lights, scene.space, background_color)
                 self._recieve_column(column, new_i)
 
