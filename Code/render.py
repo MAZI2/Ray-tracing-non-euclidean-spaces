@@ -161,7 +161,6 @@ class Renderer:
         UI.reset_image(resolution)
 
         # Par stvari si vn dobim
-        cam_u, cam_v, cam_w = camera.orientation
         fov = camera.fov # Po diagonali
 
         res_x, res_y = resolution
@@ -175,9 +174,6 @@ class Renderer:
         kot_step = fov_x / res_x # Dejansko sta enaka, ker je piksel kvadraten.
 
         # Initial smer raya, brez smeri kamere (upoštevam jo kasnej)
-        # ray_direction_deg = np.array([cam_u - (fov_x / 2),
-        #                               cam_v + (fov_y / 2)])
-        
         ray_direction_deg = np.array([(- fov_x / 2), 
                                        fov_y / 2])
         
