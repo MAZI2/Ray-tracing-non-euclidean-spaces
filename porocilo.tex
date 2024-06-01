@@ -102,7 +102,7 @@ smo enotske vektorje \( v \) generirali po postopku:
   ima azimut \[ \theta = -FOV_X/2 + i \cdot \Delta x \] in elevacijo \[ \phi = FOV_Y/2 - j \cdot \Delta x, \]
   kjer je \( i \) stolpec in \( j \) vrstica slike (šteta po računalničarsko, torej začnemo z 0).
   \item Korektiramo distorcijo žarkov, ki se pojavi, ker sta točki na enotski sferi, ko je \( \phi \) blizu 0 in 
-  rotiramo \(\theta += \Delta x \) veliko bolj oddaljeni, kot ko je \( \phi \) blizu \( \pi/2 \) 
+  rotiramo \(\theta =\theta + \Delta x \) veliko bolj oddaljeni, kot ko je \( \phi \) blizu \( \pi/2 \) 
   (kjer bi za vsak \( \theta \) dobili enako točko) \[ \phi_{true} = \phi \cdot cos(\theta) \]
   \item Enotski vektor \( \vec{v} \) dobimo iz azimuta in elevacije kot:
   \[ \vec{v} = [ \cos(\theta) \cos(\phi), \sin(\phi), \cos(\theta) \sin(\phi) ]^T \]
