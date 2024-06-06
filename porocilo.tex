@@ -80,13 +80,13 @@ Za ravnino z normalo \( \vec{n} = [a, b, c]^T \) in točko na ravnini $(x_{0}, y
 
 \subsection{Prostori}
 Vsak prostor implementira funkcijo v obliki
-\[ s(t, T, \vec{v}): \mathbb{R} \to \mathbb{R}^3 = [x, y, z]^T \]
+\[ s_{T,v}(t): \mathbb{R} \to \mathbb{R}^3 = [x, y, z]^T \]
 ki vrne točko v prostoru, kjer bi bil žarek, ki gre skozi točko \(T\) v smeri \(\vec{v}\), če 
-ga premaknemo za razdaljo \(t\) po tem prostoru. V prostoru 2-Sphere funkcija računa približek, v primeru evklidskega prostora pa je to 
-preprosto premik po premici za razdaljo \(t\)
+ga premaknemo za razdaljo \(t\) po tem prostoru. Na dvodimenzionalni sferi $\mathbb{S}^{2}$ funkcija računa približek, v primeru evklidskega prostora pa je to preprosto premik po premici za korak \(t\)
 \[ \vec{T}_{n+1} = \vec{T}_{n} + t \cdot \vec{v} \]
 \bigskip
-Prostora flat torus in 2-sphere sta podrobneje opisana kasneje.
+\newline
+Sledenje žarkom na ploščatem torusu in dvodimenzionalni sferi sta podrobneje opisana kasneje.
 
 \subsection{Generiranje žarkov}
 Žarek je definiran z začetno točko \(T_{0}\) in enotskim vektorjem \(\vec{v}\). Ker smo si želeli, da 
@@ -190,10 +190,10 @@ Implementacija tega predstavlja izboljšavo, ki bi jo lahko dodali v prihodnosti
 Na sceni kamera gleda v krogle obrnjena za 10 stopinj navzgor. Enaka scena 
 bo uprizorjena tudi v drugih prostorih.
 
-\section{\texorpdfstring{Sledenje žarkom na flat torusu \( \mathbb{T}_{pl}^{3} \)}{Sledenje žarkom na flat torusu}}
+\section{\texorpdfstring{Sledenje žarkom na ploščatem torusu \( \mathbb{T}_{pl}^{3} \)}{Sledenje žarkom na flat torusu}}
 
-\subsection{Kaj je tri dimenzionalni flat torus?}
-Tri dimenzionalni flat torus \( \mathbb{T}^3_{pl} \) je prostor, ki ga dobimo tako, da "zlepimo" nasprotne ploskve enotske kocke \([0,1] \times [0,1] \times [0,1] \subset \mathbb{R}^3 \), kjer je \(\mathbb{R}^3\) tridimenzionalni evklidski prostor. Formalno pravimo, da je \( \mathbb{T}^3_{pl} \) kvocient \(\mathbb{R}^3\) z grupo translacij:
+\subsection{Kaj je tri dimenzionalni ploščat torus \( \mathbb{T}_{pl}^{3} \) ?}
+Tri dimenzionalni flat torus \( \mathbb{T}^3_{pl} \) je prostor, ki ga dobimo tako, da združimo nasprotne ploskve enotske kocke \([0,1] \times [0,1] \times [0,1] \subset \mathbb{R}^3 \), kjer je \(\mathbb{R}^3\) tridimenzionalni evklidski prostor. Formalno pravimo, da je \( \mathbb{T}^3_{pl} \) kvocient \(\mathbb{R}^3\) z grupo translacij:
 \[
 (x, y, z) \to (x \pm 1, y, z), \quad (x, y, z) \to (x, y \pm 1, z), \quad (x, y, z) \to (x, y, z \pm 1).
 \]
@@ -207,7 +207,7 @@ Običajni torusi so ukrivljeni in se jim ukrivljenost po površini spreminja. Fl
     \label{Slika:Žarek v dvodimenzionalnem flat torusu}
 \end{figure}
 \subsection{Algoritmi za flat torus}
-Ključni vpogled, je da žarek omejimo na domeno. V spodnji funkciji mapToCube je $T_{n}$ začetni vektor, a je začetek domene, b konec domene.
+Ključna sprememba v primerjavi z običajnim prostorom $\mathbb{R}^{3}$ je ta, da žarek omejimo na kocko $[a,b]^{3}$. V spodnji funkciji mapToCube je $T_{n}$ začetni vektor, a in b pa meje intervala $[a,b]$.
 \begin{algorithm}[H]
 \caption{Map to Cube}\label{alg:mapToCube}
 \begin{algorithmic}[1]
@@ -221,7 +221,7 @@ Ključni vpogled, je da žarek omejimo na domeno. V spodnji funkciji mapToCube j
 \end{algorithmic}
 \end{algorithm}
 
-Funkcija \textbf{traceRayFlatTorus} sprejme začetno točko $T_{0}$, smer $\vec{v}$, korak step, maksimalno število iteracij maxIt, množico objektov objects in meje $a$ in $b$ domene na katero bomo preslikovali koordinate žarka.
+Funkcija \textbf{traceRayFlatTorus} sprejme začetno točko $T_{0}$, smer $\vec{v}$, korak step, maksimalno število iteracij maxIt, množico objektov objects in meje $a$ in $b$.
 Pomožni funkciji \textbf{signs} in \textbf{checkIntersect} implementirata funkcije objektov \( o(x,y,z) \).
 \begin{algorithm}[H]
     \caption{Sledenje žarku na flat torusu}
@@ -324,7 +324,7 @@ za \( v \) pa uporabimo prvi dve enačbi
         &v=\tan^{-1} \left(\frac{Y}{X} \right)
     \end{split}
 \end{equation}
-
+\newpage
 Za sledenje žarku po geodetki, si moramo poleg začetne točke izbrati še začetno smer
 \(\left( \frac{du}{dt}, \frac{dv}{dt} \right) \). Tako kot pri ostalih prostorih v nalogi, 
 bomo uporabili perspektivno projekcijo, kar pomeni da vsi žarki izvirajo iz ene točke in 
@@ -346,11 +346,11 @@ vsak žarek izračunali središče sfere z najnižjo \( z \) koordinato in polme
   \label{fig:test2}
 \end{minipage}
 \end{figure}
-
-Središča sfer žarkov se bodo torej nahajala na sferi s polmerom \( R \) in središem v kameri \( T_{0} \). Za različne smeri žarkov \(\vec{v}_{i} \) je bilo središče \( C_{i} \) izračunano po sledečem postopku:
-
 \bigskip
-
+\newline
+Za različne smeri žarkov \(\vec{v}_{i} \) je bilo središče \( C_{i} \) izračunano po sledečem postopku:
+\bigskip
+\newline
 Izračunamo vektorski produkt med navpičnim vektorjem in smerjo \( \vec{v}_{i} \). Dobljeni vektor je normala na ravnino krožnice z iskanim središčem, ki gre skozi \( T_{0} \)
 \begin{equation} \label{e:sphC1}
     \vec{n}_{i}=(0, 0, -1) \times \vec{v}_{i}
@@ -364,6 +364,13 @@ Krajevni vektor središča nato dobimo tako, da se premaknemo za polmer \( R \) 
 \begin{equation}\label{e:sphC3}
     \vec{r}_{ci}=\frac{\vec{c}_{i}}{\left \| \vec{c}_{i}\right \|} \cdot R + T_{0}
 \end{equation}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{Images/sredisca.png}
+    \caption{Postopek računanja središč krožnic}
+    \label{fig:centers}
+\end{figure}
 
 Za korak po geodetki bomo \( T_{0} \) najprej premaknili za vektor \( \vec{r}_{ci} \), tako da bo središče sfere v koordinatnem izhodišču. Nato naredimo
 korak, novo točko \( T_{i1} \) pa premaknemo nazaj za vektor \( \vec{r}_{ci} \).
