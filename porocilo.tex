@@ -80,7 +80,7 @@ Za ravnino z normalo \( \vec{n} = [a, b, c]^T \) in točko na ravnini $(x_{0}, y
 
 \subsection{Prostori}
 Vsak prostor implementira funkcijo v obliki
-\[ s(t, T, \vec{v}): \mathbb{R} \to \mathbb{R}^3 = [x, y, z]^T \]
+\[ s_{T, \vec{v}}(t): \mathbb{R} \to \mathbb{R}^3 = [x, y, z]^T \]
 ki vrne točko v prostoru, kjer bi bil žarek, ki gre skozi točko \(T\) v smeri \(\vec{v}\), če 
 ga premaknemo za razdaljo \(t\) po tem prostoru. V prostoru 2-Sphere funkcija računa približek, v primeru evklidskega prostora pa je to 
 preprosto premik po premici za razdaljo \(t\)
@@ -638,7 +638,7 @@ Flat torus uporablja kar formulo za presečišče iz evklidskega prostora, le da
 
 Za 2Sphere smo našli rešitev, ki je hitrejša od iterativnega pristopa aproksimacij premikov po geodetkah.
 
-Vsak žarek, gre namreč čez vrh in dno sfere. Žarek parametriziramo, kot točko na sferi. Za žarek poiščemo center 
+Vsak žarek gre namreč čez vrh in dno sfere. Žarek parametriziramo, kot točko na sferi. Za žarek poiščemo center 
 krogle \( [x_0, y_0, z_0] \), kot smo ga prej in za preslikavo na $uv$ ravnino uporabimo enačbi \ref{e:toU} in \ref{e:toV}. 
 Parametrizacija žarka \(s(t)\) je torej:
 
