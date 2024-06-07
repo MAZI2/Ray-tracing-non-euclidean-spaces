@@ -20,10 +20,10 @@ from scene import Scene
 Scene.configure({"sphere": Sphere((7, 0, 0), 2, (255, 145, 71)), 
                  "sphere1": Sphere((4.5, 1.6, 2), 0.5, (79, 158, 245)), 
                   "sphere2": Sphere((6.7, -2.3, -3.5), 0.7, (198, 91, 124)), 
-                  # "plane": Plane((0, -3, 0), (0, 1, 0), (200, 200, 200)),
+                  "plane": Plane((0, -3, 0), (0, 1, 0), (200, 200, 200)),
                   "light": Light((0, 6, 8)), 
                   "camera": Camera((0 , 0, 0), (0, 0, 0), (700, 500), 114), # (-4 -1.5, 0), (o, 10, 0), 84
-                  "flattorus": FlatTorus(100)})
+                  "euclidean": Euclidean()})
 
 from ui import _UIThread
 _UIThread.configure(1)
