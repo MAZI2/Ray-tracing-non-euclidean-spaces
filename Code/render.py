@@ -35,10 +35,12 @@ class _RendererWorker:
         for j in range(res_y):
             distortion_corrected_deg = [ray_direction_deg[0], ray_direction_deg[1] * np.cos(np.radians(ray_direction_deg[0]))] #Correct for distortion
             ray_direction_vec = vector_uvw.degrees_to_vector(distortion_corrected_deg)
+            
+            # ray_direction_vec = vector_uvw.degrees_to_vector(ray_direction_deg)
 
             ray_direction_vec = np.dot(rotation_matrix, ray_direction_vec) # Rotate into the direction of the camera
 
-            ray = Ray(ray_origin, ray_direction_vec, distortion_corrected_deg) #TODO Pr 2 sphere uporablam to, ampak dela samo za kamera naravnost...
+            ray = Ray(ray_origin, ray_direction_vec, ray_direction_deg) 
             image[j] = self._trace_ray(ray, objects, lights, space, background_color)
 
             # Obrnem ray

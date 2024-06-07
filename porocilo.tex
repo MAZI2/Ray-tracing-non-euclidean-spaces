@@ -89,46 +89,63 @@ ga premaknemo za razdaljo \(t\) po tem prostoru. Na dvodimenzionalni sferi $\mat
 Sledenje žarkom na ploščatem torusu in dvodimenzionalni sferi sta podrobneje opisana kasneje.
 
 \subsection{Generiranje žarkov}
-Žarek je definiran z začetno točko \(T_{0}\) in enotskim vektorjem \(\vec{v}\). Ker smo si želeli, da 
-širino kadra (ang. Field of View) podamo v stopinjah kota, ki ga kamera vidi po diagonali kadra,
-smo enotske vektorje \( v \) generirali po postopku:
+Žarek je definiran z začetno točko \(T_{0}\) in enotskim smernim vektorjem \(\vec{v}\) (začetna pozicija in smer). Ker smo si želeli, da 
+širino kadra (ang. Field of View, v nadaljevanju FOV) podamo v stopinjah kota, ki ga kamera vidi po diagonali kadra,
+smo žarke generirali po postopku:
 
 \begin{enumerate}
-  \item Vsi žarki, imajo začetno točko \(T_{0}\) na poziciji kamere
-  \item Iz \( FOV \) izračunamo \( FOV_X \) (širino kadra po horizontali), \( FOV_Y \) (širino kadra po vertikali)
-  \item Ker so piksli slike štirikotni, lahko zamik v smeri horizontalni in vertikalni smeri izračunamo kot:
-  \[\Delta x = \Delta y = \frac{FOV_X}{RES_X} \] kjer je \(RES_X\) širina slike v pikslih.
-  \item Žarke predstavimo kot točke na enotski sferi, ki je usmerjena v smer v katero kaže kamera. Vsak žarek, 
-  ima azimut \[ \theta = -FOV_X/2 + i \cdot \Delta x \] in elevacijo \[ \phi = FOV_Y/2 - j \cdot \Delta x, \]
-  kjer je \( i \) stolpec in \( j \) vrstica slike (šteta po računalničarsko, torej začnemo z 0).
-  \item Korektiramo distorcijo žarkov, ki se pojavi, ker sta točki na enotski sferi, ko je \( \phi \) blizu 0 in 
-  rotiramo \(\theta =\theta + \Delta x \) veliko bolj oddaljeni, kot ko je \( \phi \) blizu \( \pi/2 \) 
-  (kjer bi za vsak \( \theta \) dobili enako točko) \[ \phi_{true} = \phi \cdot cos(\theta) \]
-  \item Enotski vektor \( \vec{v} \) dobimo iz azimuta in elevacije kot:
-  \[ \vec{v} = [ \cos(\theta) \cos(\phi), \sin(\phi), \cos(\theta) \sin(\phi) ]^T \]
-  \item Vektor \(v\) s pomočjo ortogonalnih matrik rotiramo v smer kamere.
+  \item Vsi žarki imajo začetno točko \(T_{0}\) na poziciji kamere.
+  \item V spremenljivko FOV shranimo željen kot, ki ga kamera vidi po diagonali kadra.
+  \item Iz \( FOV \) izračunamo \( FOV_u \) (kot ki ga vidi po vertikali), \( FOV_v \) (kot ki ga vidi po horizontali).
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{Images/fov_v_fovu_fovv.png}
+    \label{Slika:fov_v_fovu_fovv}
+  \end{figure}
+  \item Izračunamo kot da se premaknemo za eno vrstico pikslov v horizontalni in vertikalni smeri:
+  \[\Delta u = \frac{FOV_u}{RES_u};  \Delta v = \frac{FOV_v}{RES_v} \] 
+  kjer sta \(RES_u\) in \(RES_v\) ločljivost slike v pihskih po vertikali in horizontali. 
+  \( \Delta u \) in \( \Delta v \) sta dejansko enaka, ker so piksli kvadratni.
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.25\linewidth]{Images/premik_fovu.png}
+    \label{Slika:premik_fovu}
+  \end{figure}
+  \item Smer žarkov je vektor od pozicije kamere, do točke na enotski sferi z centrom na poziciji kamere. Vsak žarek, 
+  ima azimut \[ v = -FOV_v/2 + j \cdot \Delta v \] in elevacijo \[ u = FOV_u/2 - i \cdot \Delta u \cdot \cos(v) \]
+  kjer je \( i \) številka vrstice in \( j \) številka stolpca piksla katerega barvo računa ta žarek. \newline
+  Pri \( u \) smo upoštevali popravek za distorzijo, ki nastane zaradi različnih razdalij ki jih žarek prepotuje
+  če ga projeciramo na ravno ploskev.
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\linewidth]{Images/distorzija_skica.png}
+    \label{Slika:azimut_elevacija}
+  \end{figure}
+  \item Enotski vektor \( \vec{v} \) ki predstavlja smer žarka dobimo iz azimuta in elevacije kot:
+  \[ \vec{v} = [ \cos(v) \cos(u), \sin(u), \cos(v) \sin(u) ]^T \]
+  \item Vektor \(\vec{v}\) s pomočjo ortogonalnih matrik rotiramo v smer kamere.
 \end{enumerate}
-Postopek se zdi kar zapleten, vendar je proizvedel bolj natančne rezultate kot druge metode, ko 
-kamera ne gleda naravnost, npr. mreža točk za piksle nekoliko pred kamero, kjer za vsak piksel generiramo žarek 
-med kamero in točko na mreži. Omogoča nam tudi določanje širine kadra v stopinjah, kar je zelo uporabno.
+Postopek je proizvedel bolj natančne rezultate kot druge metode kot na primer mreža točk za piksle nekoliko pred kamero, kjer za vsak piksel generiramo žarek 
+med kamero in točko na mreži. Omogoči nam tudi določanje kota kadra v stopinjah.
 
 \begin{figure}[H]
   \centering
-  \begin{minipage}[t]{.5\textwidth}
+  \begin{minipage}[t]{.4\textwidth}
     \centering
     \includegraphics[width=1\linewidth]{Images/Flat_torus_14mm_distorted.png}
-    \captionof{figure}{Flat torus z distorzijo}
+    \captionof{figure}{Prostor ploščati torus z distorzijo}
     \label{fig:Torus distorted}
   \end{minipage}%
-  \begin{minipage}[t]{.5\textwidth}
+  \hspace{0.04\textwidth} % Added horizontal space
+  \begin{minipage}[t]{.4\textwidth}
     \centering
     \includegraphics[width=1\linewidth]{Images/Flat_torus_14mm_undistorted.png}
-    \captionof{figure}{Flat torus brez distorzije}
+    \captionof{figure}{Prostor ploščati torus brez distorzije}
     \label{fig:Torus undistorted}
   \end{minipage}
   \end{figure}
 
-Zgoraj je primerjava slike prostora flat torus, kjer je širina kadra ekvivalentna 14mm objektivu. Na levi je 
+Zgoraj je primerjava slike prostora ploščati torus, kjer je širina kadra ekvivalentna 14mm objektivu. Na levi je 
 prikazana slika, ki ne upošteva popravka za distorzijo (korak 5), na desni pa je slika, ki ga upošteva.
 
 Opazimo lahko, da so horizontalne črte na desni sliki dejansko horizontalne, medtem ko so na levi sliki 
@@ -190,23 +207,24 @@ Implementacija tega predstavlja izboljšavo, ki bi jo lahko dodali v prihodnosti
 Na sceni kamera gleda v krogle obrnjena za 10 stopinj navzgor. Enaka scena 
 bo uprizorjena tudi v drugih prostorih.
 
-\section{\texorpdfstring{Sledenje žarkom na ploščatem torusu \( \mathbb{T}_{pl}^{3} \)}{Sledenje žarkom na flat torusu}}
+\section{\texorpdfstring{Sledenje žarkom na ploščatem torusu \( \mathbb{T}_{pl}^{3} \)}{Sledenje žarkom na prostoru ploščati torusu}}
 
-\subsection{Kaj je tri dimenzionalni ploščat torus \( \mathbb{T}_{pl}^{3} \) ?}
-Tri dimenzionalni flat torus \( \mathbb{T}^3_{pl} \) je prostor, ki ga dobimo tako, da združimo nasprotne ploskve enotske kocke \([0,1] \times [0,1] \times [0,1] \subset \mathbb{R}^3 \), kjer je \(\mathbb{R}^3\) tridimenzionalni evklidski prostor. Formalno pravimo, da je \( \mathbb{T}^3_{pl} \) kvocient \(\mathbb{R}^3\) z grupo translacij:
+\subsection{Kaj je tri dimenzionalni ploščat torus \texorpdfstring{\( \mathbb{T}_{pl}^{3} \)}{T3pl}?}
+
+Tri dimenzionalni ploščati torus \( \mathbb{T}^3_{pl} \) je prostor, ki ga dobimo tako, da združimo nasprotne ploskve enotske kocke \([0,1] \times [0,1] \times [0,1] \subset \mathbb{R}^3 \), kjer je \(\mathbb{R}^3\) tridimenzionalni evklidski prostor. Formalno pravimo, da je \( \mathbb{T}^3_{pl} \) kvocient \(\mathbb{R}^3\) z grupo translacij:
 \[
 (x, y, z) \to (x \pm 1, y, z), \quad (x, y, z) \to (x, y \pm 1, z), \quad (x, y, z) \to (x, y, z \pm 1).
 \]
 
-Običajni torusi so ukrivljeni in se jim ukrivljenost po površini spreminja. Flat torus pa ima konstantno ukrivljenost v vsaki točki. Poimenovanje flat izhaja iz tega, ker je povsod podoben navadni evklidski ravnini. Podobno velja za tridimenzionalni flat torus, kjer pri sledenju žarka lahko uporabimo kar osnovno definicijo žarka. Ključna razlika med algoritmom v \( \mathbb{R}^3 \) in \( \mathbb{T}^3_{pl} \) pa je, da bomo tokrat dodali še en korak, ker moramo žarek omejiti na kocko. Dokler se nahajamo znotraj njenih meja, ne naredimo nobenih popravkov. Ko pa ugotovimo presečišče z eno od ploskev, moramo žarek preslikati na nasprotno ploskev. To lahko storimo tako, da preprosto žarek omejimo znotraj domene, izračunamo presežek in ga prištejemo začetku domene.
+Običajni torusi so ukrivljeni in se jim ukrivljenost po površini spreminja. Ploščati torus pa ima konstantno ukrivljenost v vsaki točki. Poimenovanje ploščati izhaja iz tega, ker je povsod podoben navadni evklidski ravnini. Podobno velja za tridimenzionalni ploščati torus, kjer pri sledenju žarka lahko uporabimo kar osnovno definicijo žarka. Ključna razlika med algoritmom v \( \mathbb{R}^3 \) in \( \mathbb{T}^3_{pl} \) pa je, da bomo tokrat dodali še en korak, ker moramo žarek omejiti na kocko. Dokler se nahajamo znotraj njenih meja, ne naredimo nobenih popravkov. Ko pa ugotovimo presečišče z eno od ploskev, moramo žarek preslikati na nasprotno ploskev. To lahko storimo tako, da preprosto žarek omejimo znotraj domene, izračunamo presežek in ga prištejemo začetku domene.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.5\linewidth]{Images/flat_torus_zrcaljenje.png}
-    \caption{Žarek v dvodimenzionalnem flat torusu}
+    \caption{Žarek v dvodimenzionalnem ploščatem torusu}
     \label{Slika:Žarek v dvodimenzionalnem flat torusu}
 \end{figure}
-\subsection{Algoritmi za flat torus}
+\subsection{Algoritmi za ploščati torus}
 Ključna sprememba v primerjavi z običajnim prostorom $\mathbb{R}^{3}$ je ta, da žarek omejimo na kocko $[a,b]^{3}$. V spodnji funkciji mapToCube je $T_{n}$ začetni vektor, a in b pa meje intervala $[a,b]$.
 \begin{algorithm}[H]
 \caption{Map to Cube}\label{alg:mapToCube}
@@ -224,7 +242,7 @@ Ključna sprememba v primerjavi z običajnim prostorom $\mathbb{R}^{3}$ je ta, d
 Funkcija \textbf{traceRayFlatTorus} sprejme začetno točko $T_{0}$, smer $\vec{v}$, korak step, maksimalno število iteracij maxIt, množico objektov objects in meje $a$ in $b$.
 Pomožni funkciji \textbf{signs} in \textbf{checkIntersect} implementirata funkcije objektov \( o(x,y,z) \).
 \begin{algorithm}[H]
-    \caption{Sledenje žarku na flat torusu}
+    \caption{Sledenje žarku na ploščatem torusu}
 \begin{algorithmic}
     \Function{traceRayFlatTorus}{$T_{0}$, $\vec{v}$, step, maxIt, objects, a, b, $\varepsilon$}
 
@@ -267,7 +285,7 @@ Ko program poženemo, dobimo lep vizualni rezultat.
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.7\linewidth]{Images/flat_torus_24mm_500.png}
-    \caption{Rezultat "ray tracinga" za tri dimenzionalni flat torus (500 preslikanj), kjer scena nima ravnine.}
+    \caption{Rezultat "ray tracinga" za tri dimenzionalni ploščati torus (500 preslikanj), kjer scena nima ravnine.}
     \label{Slika:Rezultat "ray tracinga" za tri dimenzionalni flat torus}
 \end{figure}
 Na sliki lahko opazimo podoben efekt tistemu v hišah iluzij, ko smo v sobi polni ogledal. Razlika je v tem, 
@@ -347,7 +365,7 @@ vsak žarek izračunali središče sfere z najnižjo \( z \) koordinato in polme
 \end{minipage}
 \end{figure}
 \bigskip
-\newline
+
 Za različne smeri žarkov \(\vec{v}_{i} \) je bilo središče \( C_{i} \) izračunano po sledečem postopku:
 \bigskip
 \newline
@@ -400,7 +418,7 @@ ki z uporabo večih metod estimira napako približka in temu primerno prilagodi 
 Algoritmi, ki implementirajo opisane metode so predstavljeni v naslednjem poglavju.
 \newpage
 
-\subsection{Algoritmi za 2-sphere}
+\subsection{Algoritmi za dvodimenzionalno sfero}
 Funkcija \textbf{traceRay2Sphere} sprejme začetko točko $T_{0}$, smer $\vec{v}$, velikost koraka step, maksimalno število iteracij maxIt, množico objektov objects, polmer sfere $\mathbb{S}^2$ in natančnost presečišča $\varepsilon$. 
 Pomožna funkcija \textbf{sphereCenter} implementira formule \eqref{e:sphC1}, \eqref{e:sphC2}, \eqref{e:sphC3}, \textbf{initializeSphere} formule \eqref{e:geoSys}, \eqref{e:toU}, \eqref{e:toV}, \textbf{uvToVec} pa formulo \eqref{e:toXYZ}. Funkcija \textbf{DOPRI5} predstavlja implementacijo DOPRI5, ki naredi po en korak glede na trenutno velikost koraka, in skupaj s približkom vrne tudi novo velikost koraka. Tu lahko uporabimo tudi katero drugo adaptivno funkcijo. Ostale funkcije so opisane v
 razdelku 
@@ -521,7 +539,7 @@ Sceno iz sekvence lahko vidimo na \hyperref[fig:2sphRays2]{sliki žarkov}, kjer 
 
 
 Pomembno je omeniti tudi, da v primeru velikih radijev sfer, po katerih se premikajo žarki, prostor izgleda manj popačeno \ref{fig:2sphere R=25}. 
-Slike scene v neevklidskih prosorih vidimo na \ref{fig:Speedup 2sphere scene} in \ref{fig:Speedup euclidean scene}. V prostoru 2sphere, kjer je radij sfere 25, izgleda skoraj kot da bi kamero usmerili v tla. To je 
+Slike scene v neevklidskih prosorih vidimo na \ref{fig:Speedup 2sphere scene} in \ref{fig:Speedup euclidean scene}. V dvodimenzionalni sferi, kjer je radij sfere 25, izgleda skoraj kot da bi kamero usmerili v tla. To je 
 ponovno posledica dejstva, da objekti pred nami v sliko vstopajo od zgoraj. Opazimo pa tudi, da je krogla na \hyperref[fig:2sphere R=25]{sliki} 
 uprizorjena, kot da bi jo gledali z višje točke, kar je posledica ukrivljanja žarkov navzdol.
 
@@ -546,7 +564,7 @@ na \hyperref[fig:2sphRays2]{sliki žarkov}. Za razliko od evklidskega prostora p
 \begin{minipage}[t]{.33\textwidth}
   \centering
   \includegraphics[width=1\linewidth]{Images/Torus.jpg}
-  \captionof{figure}{flat torus}
+  \captionof{figure}{Ploščati torus}
   \label{fig:Flat torus render}
 \end{minipage}
 \begin{minipage}[t]{.33\textwidth}
@@ -587,7 +605,7 @@ točka \([x, y, z]\) na objektu.
 
 Da bolje razumemo problem, si poglejmo par grafov, ki prikazujejo kako se 
 "razdalja" do oranžne krogle (vrednost funkcije \( o(t) \)) spreminja glede na razdaljo žarka od 
-kamere (vrednost \( t \)) v evklidskem prostoru in prostoru 2sphere. V sredini slike je obkrožen piksel katerega žarek spremljamo.
+kamere (vrednost \( t \)) v evklidskem prostoru in prostoru dvodimenzionalna sfera. V sredini slike je obkrožen piksel katerega žarek spremljamo.
 
 \begin{figure}[H]
   \centering
@@ -601,7 +619,7 @@ kamere (vrednost \( t \)) v evklidskem prostoru in prostoru 2sphere. V sredini s
   \begin{minipage}[t]{.4\textwidth}
     \centering
     \includegraphics[width=1\linewidth]{Images/speedup_2sphere_scene.png}
-    \captionof{figure}{Scena, ki jo bomo pospeševali na 2Sphere}
+    \captionof{figure}{Scena, ki jo bomo pospeševali v dvodimenzionalni sferi}
     \label{fig:Speedup 2sphere scene}
   \end{minipage}
 \end{figure}
@@ -618,12 +636,12 @@ kamere (vrednost \( t \)) v evklidskem prostoru in prostoru 2sphere. V sredini s
   \begin{minipage}[t]{.4\textwidth}
     \centering
     \includegraphics[width=1\linewidth]{Images/speedup_2sphere_graph.png}
-    \captionof{figure}{Graf o(t) za 2Sphere}
+    \captionof{figure}{Graf o(t) za dvodimenzionalno sfero}
     \label{fig:Speedup 2sphere graph}
   \end{minipage}
 \end{figure}
 
-Hitro nam postane jasno, da razdalja žarka sledi funkciji, ki ima 0, 1, ali 2 ničli (za 2sphere iščemo le na intervalu \(t \in [0, 2\pi] \)). 
+Hitro nam postane jasno, da razdalja žarka sledi funkciji, ki ima 0, 1, ali 2 ničli (za dvodimenzionalno sfero iščemo le na intervalu \(t \in [0, 2\pi] \)). 
 Imamo le en minimum za katerega velja, da če je večji od 0, se žarek objekta nikoli ne bo dotaknil.
 
 Implementirali smo naslednje izboljšave osnovnega algoritma:
@@ -633,17 +651,17 @@ Implementirali smo naslednje izboljšave osnovnega algoritma:
   \item Dokler se funkcija \( o(t) \) ne povečuje, večamo korak, da hitreje pridemo do presečišča.
 \end{itemize}
 
-\subsection{Pohitritev iskanja presečišč za euclidean in flat torus}
+\subsection{Pohitritev iskanja presečišč za euclidean in ploščati torus}
 
 Ideja je preprosta. Zakaj bi delali iterativne korake, če lahko preprosto izpeljemo 
 formulo za izračun parametra \( t \) za katerega velja \( f = 0 \)? Tako presečišče 
 najdemo v času odvisnem le od števila objektov v sceni.
 
-Flat torus uporablja kar formulo za presečišče iz evklidskega prostora, le da žarke še preslika, če pridejo do roba torusa.
+Ploščati torus uporablja kar formulo za presečišče iz evklidskega prostora, le da žarke še preslika, če pridejo do roba torusa.
 
-\subsection{Pohitritev iskanja presečišč za 2Sphere}
+\subsection{Pohitritev iskanja presečišč za dvodimenzionalno sfero}
 
-Za 2Sphere smo našli rešitev, ki je hitrejša od iterativnega pristopa aproksimacij premikov po geodetkah.
+Za prostor dvodimenzionalna sfera smo našli rešitev, ki je hitrejša od iterativnega pristopa aproksimacij premikov po geodetkah.
 
 Vsak žarek gre namreč čez vrh in dno sfere. Žarek parametriziramo, kot točko na sferi. Za žarek poiščemo center 
 krogle \( [x_0, y_0, z_0] \), kot smo ga prej in za preslikavo na $uv$ ravnino uporabimo enačbi \ref{e:toU} in \ref{e:toV}. 
@@ -683,8 +701,8 @@ Eden izmed ciljev je bil tudi enostavno dodajanje novih objektov in prostorov:
 \section{Razdelitev dela}
 \begin{itemize}
   \item Blaž Bergant: Zasnova programa, implementacija osnovnega raytracing algoritma, izpeljava formul za hitrejše delovanje.
-  \item Martin Jereb: Priprava poročila, razlaga in implemenacija prostora flat torus, priprava predstavitve.
-\item Matjaž Pogačnik: Implementacija in izpeljava algoritmov za 2Sphere, priprava poročila in generiranje slik.
+  \item Martin Jereb: Priprava poročila, razlaga in implemenacija prostora ploščati torus, priprava predstavitve.
+\item Matjaž Pogačnik: Implementacija in izpeljava algoritmov za dvodimenzionalno sfero, priprava poročila in generiranje slik.
 \end{itemize}
 
 \section{Viri}
