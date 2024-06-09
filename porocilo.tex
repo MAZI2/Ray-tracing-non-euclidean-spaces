@@ -40,7 +40,7 @@ To je ravno zaradi potovanja žarkov. Ker smo v evklidskem prostoru, bo žarek p
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\linewidth]{Images/potovanje_zarkov.png}
+    \includegraphics[width=0.7\linewidth]{Images/potovanje_zarkov.png}
     \caption{Primerjava žarka v evklidskem in sferičnem prostoru [Vir: G. Kovač]}
     \label{Slika:Primerjava žarkov evklidski, sferični}
 \end{figure}
@@ -76,7 +76,7 @@ Sledenje žarkom na ploščatem torusu in dvodimenzionalni sferi sta podrobneje 
   \item Iz \( FOV \) izračunamo \( FOV_u \) (kot ki ga vidi po vertikali), \( FOV_v \) (kot ki ga vidi po horizontali).
   \begin{figure}[H]
     \centering
-    \includegraphics[width=0.5\linewidth]{Images/fov_v_fovu_fovv.png}
+    \includegraphics[width=0.9\linewidth]{Images/fov_v_fovu_fovv.png}
     \label{Slika:fov_v_fovu_fovv}
   \end{figure}
   \item Izračunamo kot da se premaknemo za eno vrstico pikslov v horizontalni in vertikalni smeri:
@@ -84,14 +84,14 @@ Sledenje žarkom na ploščatem torusu in dvodimenzionalni sferi sta podrobneje 
   kjer sta \(RES_u\) in \(RES_v\) ločljivost slike v pihskih po vertikali in horizontali. \( \Delta u \) in \( \Delta v \) sta dejansko enaka, ker so piksli kvadratni.
   \begin{figure}[H]
     \centering
-    \includegraphics[width=0.25\linewidth]{Images/premik_fovu.png}
+    \includegraphics[width=0.9\linewidth]{Images/premik_fovu.png}
     \label{Slika:premik_fovu}
   \end{figure}
   \item Smer žarkov je vektor od pozicije kamere, do točke na enotski sferi z centrom na poziciji kamere. Vsak žarek, ima azimut \[ v = -FOV_v/2 + j \cdot \Delta v \] in elevacijo \[ u = FOV_u/2 - i \cdot \Delta u \cdot \cos(v) \] kjer je \( i \) številka vrstice in \( j \) številka stolpca piksla katerega barvo računa ta žarek. \newline
   Pri \( u \) smo upoštevali popravek za distorzijo, ki nastane zaradi določanja žarkov s pomočjo sfere.
   \begin{figure}[H]
     \centering
-    \includegraphics[width=0.7\linewidth]{Images/distorzija_skica.png}
+    \includegraphics[width=0.9\linewidth]{Images/distorzija_skica.png}
     \label{Slika:azimut_elevacija}
   \end{figure}
   \item Enotski vektor \( \vec{v} \) ki predstavlja smer žarka dobimo iz azimuta in elevacije kot:
