@@ -197,8 +197,8 @@ class TwoSphere(_Space):
 
     # Equation stuff
     def xyz_equation(self, ray: Ray, t: float) -> np.ndarray: #TODO Tukej bi naredu memorizacijo, in u in v zračunu iz podanga raya ker (če kamera ne gleda naravnost) ta k je znotrej raya ni pravi.
-        u, v = vector_uvw.vector_to_degrees(ray.direction)
-        # u, v = ray.direction_deg[:2]
+        # u, v = vector_uvw.vector_to_degrees(ray.direction)
+        u, v = ray.direction_deg[:2]
         vector_to_center = vector_uvw.degrees_to_vector((u, v - 90)) # Vektor ki gre od točke prot centru "sfere"
         sphere_center = ray.origin + vector_to_center * self.R # Za R proti središču sfere od točke na sferi je center
 

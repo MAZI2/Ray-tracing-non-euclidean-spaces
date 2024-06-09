@@ -161,7 +161,7 @@ class _UIThread():
     def plot(self, t_values: np.ndarray, dist_values: np.ndarray):
         plt.plot(t_values, dist_values, label=f"eq(t)")
         plt.xlabel('t')
-        plt.ylabel('equation(t)')
+        plt.ylabel('o(t)')
         plt.grid(True)
         plt.show(block=True)
         exit(0)
