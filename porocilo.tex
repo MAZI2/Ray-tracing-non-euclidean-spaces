@@ -114,19 +114,17 @@ smo žarke generirali po postopku:
   \item Smer žarkov je vektor od pozicije kamere, do točke na enotski sferi z centrom na poziciji kamere. Vsak žarek, 
   ima azimut \[ v = -FOV_v/2 + j \cdot \Delta v \] in elevacijo \[ u = FOV_u/2 - i \cdot \Delta u \cdot \cos(v) \]
   kjer je \( i \) številka vrstice in \( j \) številka stolpca piksla katerega barvo računa ta žarek. \newline
-  Pri \( u \) smo upoštevali popravek za distorzijo, ki nastane zaradi različnih razdalij ki jih žarek prepotuje
-  če ga projeciramo na ravno ploskev.
+  Pri \( u \) smo upoštevali popravek za distorzijo, ki nastane zaradi določanja žarkov s pomočjo sfere.
   \begin{figure}[H]
     \centering
     \includegraphics[width=0.7\linewidth]{Images/distorzija_skica.png}
     \label{Slika:azimut_elevacija}
   \end{figure}
   \item Enotski vektor \( \vec{v} \) ki predstavlja smer žarka dobimo iz azimuta in elevacije kot:
-  \[ \vec{v} = [ \cos(v) \cos(u), \sin(u), \cos(v) \sin(u) ]^T \]
+  \[ \vec{v} = [ \cos(v) \cos(u), \cos(v) \sin(u), \sin(u) ]^T \]
   \item Vektor \(\vec{v}\) s pomočjo ortogonalnih matrik rotiramo v smer kamere.
 \end{enumerate}
-Postopek je proizvedel bolj natančne rezultate kot druge metode kot na primer mreža točk za piksle nekoliko pred kamero, kjer za vsak piksel generiramo žarek 
-med kamero in točko na mreži. Omogoči nam tudi določanje kota kadra v stopinjah.
+Postopek nam je omogoči določanje kota kadra v stopinjah in preprosto nastavljanje kamere.
 
 \begin{figure}[H]
   \centering
@@ -651,7 +649,7 @@ Implementirali smo naslednje izboljšave osnovnega algoritma:
   \item Dokler se funkcija \( o(t) \) ne povečuje, večamo korak, da hitreje pridemo do presečišča.
 \end{itemize}
 
-\subsection{Pohitritev iskanja presečišč za euclidean in ploščati torus}
+\subsection{Pohitritev iskanja presečišč za evklidski prostor in ploščati torus} \label{speedup1}
 
 Ideja je preprosta. Zakaj bi delali iterativne korake, če lahko preprosto izpeljemo 
 formulo za izračun parametra \( t \) za katerega velja \( f = 0 \)? Tako presečišče 
@@ -659,7 +657,7 @@ najdemo v času odvisnem le od števila objektov v sceni.
 
 Ploščati torus uporablja kar formulo za presečišče iz evklidskega prostora, le da žarke še preslika, če pridejo do roba torusa.
 
-\subsection{Pohitritev iskanja presečišč za dvodimenzionalno sfero}
+\subsection{Pohitritev iskanja presečišč za dvodimenzionalno sfero} \label{speedup2}
 
 Za prostor dvodimenzionalna sfera smo našli rešitev, ki je hitrejša od iterativnega pristopa aproksimacij premikov po geodetkah.
 
@@ -677,6 +675,9 @@ Parametrizacija žarka \(s(t)\) je torej:
 
 Parametrizacija za razliko od prejšnje ne računa približkov, ampak točno rešitev za katerokoli velikost koraka. 
 Zato jo lahko uporabimo v algoritmu\ref{subsec:pohitren_algoritem}.
+
+\section{Časovna zahtevnost algoritmov}
+Algoritmi brez pohitritev so bili implementirani v Matlabu, hitrejše različice pa v Pythonu. Sliko dimenzij 700x500 pri 1000 iteracijah smo v Matlabu za vse prostore generirali v približno 6min, kjer je Matlab v dvodimenzionalni sferi $\mathbb{S}^{2}$ porabil približno 30s več. V Pythonu smo z implementiranim multithreadingom za enako situacijo v evklidksem prostoru in na torusu potrebovali približno 2min. V nadaljevanju smo uporabljali pohitritve opisane v \ref{speedup1} in \ref{speedup2}.  Za evklidski prostor smo tako potrebovali 2,8s, na torusu, kjer smo dopuščali 100 preslikav pa 25,2s. Slika za dvodimenzionalno sfero je po pohitritvi potrebovala 2min.
 
 \section{Zaključek}
 Naš cilj je bil narediti program, v katerem se vsak uporabnik lahko igra z različnimi neevklidskimi
